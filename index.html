@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<!-- @ts-nocheck -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Qevrino - Premium Media Hub</title>
+  <style>
+    :root {
+      --bg-dark: #090a0f;
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --card-hover: rgba(255, 255, 255, 0.09);
+      --accent-green: #1ed760;
+      --accent-glow: rgba(30, 215, 96, 0.35);
+      --text-main: #ffffff;
+      --text-sub: #a0a5aa;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    header {
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(9, 10, 15, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .header-logo { font-size: 1.2rem; font-weight: 800; letter-spacing: 1px; }
+    .header-logo span { color: var(--accent-green); }
+
+    .header-actions { display: flex; gap: 6px; align-items: center; position: relative; }
+
+    .btn-upload-header {
+      background: var(--accent-green);
+      color: #000;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      padding-bottom: 150px;
+    }
+
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+
+    .search-box { margin-bottom: 12px; }
+    .search-box input {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: var(--text-main);
+      font-size: 0.88rem;
+      outline: none;
+    }
+    .search-box input:focus { border-color: var(--accent-green); }
+
+    .upload-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .upload-card {
+      background: linear-gradient(135deg, rgba(30, 215, 96, 0.12) 0%, rgba(255, 255, 255, 0.02) 100%);
+      border: 1px dashed rgba(30, 215, 96, 0.4);
+      border-radius: 14px;
+      padding: 12px 10px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .upload-card h3 { font-size: 0.82rem; margin-bottom: 2px; }
+    .upload-card p { color: var(--text-sub); font-size: 0.68rem; }
+
+    .section-header {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .track-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .track-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .track-card:hover { background: var(--card-hover); }
+    .track-card.active { border-color: var(--accent-green); background: rgba(30, 215, 96, 0.08); }
+
+    .track-info-flex { display: flex; align-items: center; gap: 12px; overflow: hidden; flex: 1; }
+    .track-thumb {
+      width: 40px; height: 40px; border-radius: 8px;
+      background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0; background-size: cover; background-position: center;
+    }
+
+    .track-details { overflow: hidden; }
+    .track-details h4 {
+      font-size: 0.84rem; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;
+    }
+    .track-details p { font-size: 0.68rem; color: var(--text-sub); }
+
+    .track-actions { display: flex; align-items: center; gap: 6px; }
+    .action-btn { background: none; border: none; color: var(--text-sub); font-size: 1rem; cursor: pointer; padding: 6px; }
+    .action-btn:hover { color: #fff; }
+
+    .playlist-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+    .playlist-card {
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 12px;
+      display: flex; flex-direction: column; gap: 8px; cursor: pointer; position: relative;
+    }
+    .playlist-card.active { border-color: var(--accent-green); }
+    .playlist-dp {
+      width: 100%; height: 90px; border-radius: 10px; background: rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center; font-size: 2rem;
+      background-size: cover; background-position: center;
+    }
+    .playlist-info-row { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 2px; }
+    .playlist-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+    .playlist-count { font-size: 0.7rem; color: var(--text-sub); }
+    
+    .menu-container { position: relative; display: inline-block; }
+    .menu-dropdown {
+      display: none; position: absolute; right: 0; top: 100%;
+      background: #181b24; border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.9); z-index: 9999; min-width: 180px; overflow: hidden;
+    }
+    .menu-dropdown.show { display: block; }
+    .menu-item {
+      padding: 10px 14px; font-size: 0.8rem; color: var(--text-main); cursor: pointer;
+      display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .menu-item:hover { background: rgba(255,255,255,0.08); }
+    .menu-item.danger { color: #ff4d4d; }
+
+    .create-playlist-btn {
+      background: rgba(30, 215, 96, 0.15); border: 1px dashed var(--accent-green);
+      color: var(--accent-green); border-radius: 14px; padding: 12px;
+      font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+    }
+
+    .big-add-songs-btn {
+      background: linear-gradient(135deg, rgba(30,215,96,0.2) 0%, rgba(30,215,96,0.05) 100%);
+      border: 2px dashed var(--accent-green);
+      color: var(--accent-green);
+      border-radius: 14px;
+      padding: 12px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      margin-bottom: 14px;
+    }
+
+    .spotify-playlist-header {
+      background: linear-gradient(180deg, rgba(30,215,96,0.22) 0%, rgba(9,10,15,0.95) 100%);
+      padding: 16px;
+      border-radius: 16px;
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border: 1px solid var(--border);
+    }
+    .spotify-pl-info { display: flex; align-items: center; justify-content: space-between; }
+    .spotify-pl-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
+    .spotify-pl-avatar {
+      font-size: 2rem; background: rgba(255,255,255,0.1); width: 56px; height: 56px;
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      background-size: cover; background-position: center; flex-shrink: 0;
+    }
+    .spotify-pl-buttons { display: flex; gap: 8px; align-items: center; }
+
+    .player-dock {
+      position: fixed;
+      bottom: 60px;
+      left: 10px; right: 10px;
+      background: rgba(18, 20, 28, 0.98);
+      backdrop-filter: blur(25px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 8px 12px;
+      display: none;
+      flex-direction: column; gap: 4px; z-index: 400;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+
+    .range-slider-container {
+      width: 100%; height: 24px; position: relative; display: flex; align-items: center; cursor: pointer; touch-action: none;
+    }
+    .range-track {
+      width: 100%; height: 6px; background: rgba(255, 255, 255, 0.18); border-radius: 3px; position: relative; overflow: visible;
+    }
+    .range-fill {
+      height: 100%; width: 0%; background: var(--accent-green); border-radius: 3px; position: absolute; top: 0; left: 0; pointer-events: none;
+    }
+    .range-thumb {
+      width: 16px; height: 16px; background: #ffffff; border: 2px solid var(--accent-green);
+      border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%);
+      left: 0%; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    }
+
+    .player-main-row { display: flex; align-items: center; justify-content: space-between; }
+    .now-playing { display: flex; align-items: center; gap: 10px; overflow: hidden; cursor: pointer; flex: 1; }
+    .now-playing-info h4 { font-size: 0.82rem; font-weight: 600; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .now-playing-info p { font-size: 0.68rem; color: var(--text-sub); }
+
+    .pro-controls { display: flex; align-items: center; gap: 12px; }
+    .ctrl-btn { background: none; border: none; color: var(--text-main); font-size: 1.1rem; cursor: pointer; transition: color 0.2s, transform 0.1s; }
+    .ctrl-btn.active { color: var(--accent-green); filter: drop-shadow(0 0 6px var(--accent-green)); }
+    .ctrl-btn:active { transform: scale(0.9); }
+
+    .skip-badge-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+    .skip-badge-btn.timer-active {
+      background: rgba(30, 215, 96, 0.2);
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+    }
+
+    .master-play-btn {
+      background: var(--accent-green); border: none; width: 40px; height: 40px;
+      border-radius: 50%; color: #000; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer;
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+
+    .fullscreen-player {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle at center, #1a1e29 0%, #090a0f 100%);
+      z-index: 2000; display: none; flex-direction: column; justify-content: flex-start;
+      padding: 12px 16px 20px 16px; box-sizing: border-box; overflow-y: auto; gap: 8px;
+    }
+    .fs-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+    .fs-close-btn { background: none; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; }
+    
+    .fs-media-display {
+      width: 100%; max-height: 160px; display: flex; align-items: center; justify-content: center;
+      background: #000; border-radius: 12px; overflow: hidden; margin: 2px 0; position: relative;
+    }
+    .fs-media-display video { width: 100%; max-height: 160px; object-fit: contain; display: none; }
+    .fs-artwork { font-size: 3rem; display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; background-size: cover; background-position: center; }
+
+    .fs-track-info { text-align: center; margin-bottom: 2px; }
+    .fs-track-info h2 { font-size: 1rem; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fs-track-info p { color: var(--text-sub); font-size: 0.72rem; }
+
+    .fs-controls-container { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: auto; }
+    .fs-time-row { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-sub); margin-top: -4px; }
+    .fs-main-btns { display: flex; justify-content: space-around; align-items: center; }
+    .fs-extra-controls { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 0 4px; font-size: 0.72rem; color: var(--text-sub); }
+    .fs-select { background: var(--card-bg); border: 1px solid var(--border); color: #fff; padding: 4px 8px; border-radius: 8px; outline: none; font-size: 0.72rem; }
+
+    .pro-panel-box {
+      background: rgba(20, 23, 31, 0.95); border: 1px solid var(--border); border-radius: 12px;
+      padding: 8px 10px; display: none; flex-direction: column; gap: 4px; width: 100%;
+    }
+    .pro-panel-box.show { display: flex; }
+
+    .status-toast {
+      position: fixed; top: 55px; left: 50%; transform: translateX(-50%);
+      background: var(--accent-green); color: #000; font-weight: 700; font-size: 0.75rem;
+      padding: 6px 14px; border-radius: 20px; box-shadow: 0 4px 15px var(--accent-glow);
+      display: none; z-index: 4000; animation: fadeInOut 2s ease;
+    }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translate(-50%, -10px); }
+      15% { opacity: 1; transform: translate(-50%, 0); }
+      85% { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, -10px); }
+    }
+
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; width: 100%;
+      height: 56px; background: #07080a; border-top: 1px solid var(--border);
+      display: flex; justify-content: space-around; align-items: center; z-index: 500;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      color: var(--text-sub); font-size: 0.68rem; cursor: pointer; border: none; background: none;
+    }
+    .nav-item.active { color: var(--accent-green); font-weight: 700; }
+    .nav-item svg { width: 16px; height: 16px; fill: currentColor; }
+
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.82); display: none; align-items: center; justify-content: center; z-index: 3000; padding: 20px;
+    }
+    .modal-card {
+      background: #14171f; border: 1px solid var(--border); border-radius: 20px;
+      padding: 18px; width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .modal-card label { font-size: 0.75rem; color: var(--text-sub); margin-bottom: -4px; }
+    .modal-card input[type="text"], .modal-card textarea {
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
+      padding: 9px 12px; color: #fff; outline: none; font-size: 0.85rem;
+    }
+    .modal-card textarea { resize: vertical; min-height: 60px; }
+    .modal-card input[type="file"] { font-size: 0.75rem; color: var(--text-sub); }
+    .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .modal-btn { padding: 6px 12px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.78rem; }
+    .modal-btn.primary { background: var(--accent-green); color: #000; }
+    .modal-btn.secondary { background: rgba(255,255,255,0.1); color: #fff; }
+    .modal-btn.danger { background: #ff4d4d; color: #fff; }
+
+    #mp3-file-input, #mp4-file-input, #import-json-input { display: none; }
+  </style>
+</head>
+<body>
+  <audio id="main-audio-player" crossorigin="anonymous"></audio>
+  <input type="file" id="mp3-file-input" multiple accept="audio/*,.mp3">
+  <input type="file" id="mp4-file-input" multiple accept="video/mp4,.mp4">
+  <input type="file" id="import-json-input" accept=".json" onchange="importAppData(event)">
+
+  <div id="toast-msg" class="status-toast"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="header-logo">QEVRINO<span>.</span></div>
+    <div class="header-actions">
+      <button class="btn-upload-header" onclick="triggerMp3Upload()">+ MP3</button>
+      <button class="btn-upload-header" style="background: rgba(255,255,255,0.15); color: #fff;" onclick="triggerMp4Upload()">+ MP4</button>
+      <div class="menu-container">
+        <button class="action-btn" style="font-size:1.1rem; padding:4px;" onclick="toggleMenuDropdown('global-settings-menu', event)">⚙️</button>
+        <div class="menu-dropdown" id="global-settings-menu" style="right:0;">
+          <div class="menu-item" onclick="openThemePicker()">🎨 Accent Color</div>
+          <div class="menu-item" onclick="openPreferredStorageModal()">📁 Preferred Storage</div>
+          <div class="menu-item" onclick="openBackupSelectionModal('backup')">💾 Backup Data</div>
+          <div class="menu-item" onclick="openBackupSelectionModal('save_as')">📥 Save As (Selected)</div>
+          <div class="menu-item" onclick="document.getElementById('import-json-input').click()">📂 Restore Backup</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Areas -->
+  <div class="main-content">
+    
+    <!-- Home View -->
+    <div id="view-home" class="view-section active">
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search songs, videos..." oninput="filterTracks()">
+      </div>
+
+      <div class="upload-grid">
+        <div class="upload-card" onclick="triggerMp3Upload()">
+          <h3>🎵 Upload MP3</h3>
+          <p>Audio tracks</p>
+        </div>
+        <div class="upload-card" onclick="triggerMp4Upload()">
+          <h3>🎬 Upload MP4</h3>
+          <p>Video files</p>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px;">
+        <div class="upload-card" style="padding: 8px 4px; background: rgba(255,77,77,0.1); border-color: rgba(255,77,77,0.3);" onclick="switchSmartFilter('favorites')">
+          <h4 style="font-size: 0.75rem; color: #ff4d4d;">❤️ Fav</h4>
+          <p style="font-size: 0.62rem;">Favorites</p>
+        </div>
+        <div class="upload-card" style="padding: 8px 4px; background: rgba(30,215,96,0.1); border-color: rgba(30,215,96,0.3);" onclick="switchSmartFilter('most_played')">
+          <h4 style="font-size: 0.75rem; color: var(--accent-green);">🔥 Recent</h4>
+          <p style="font-size: 0.62rem;">Most Played</p>
+        </div>
+        <div class="upload-card" style="padding: 8px 4px;" onclick="switchSmartFilter('all')">
+          <h4 style="font-size: 0.75rem;">📂 All</h4>
+          <p style="font-size: 0.62rem;">All Tracks</p>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <span id="home-section-title">All Tracks</span>
+        <span id="track-count" style="font-size: 0.75rem; color: var(--text-sub);">0 tracks</span>
+      </div>
+
+      <div class="track-list" id="home-track-list"></div>
+    </div>
+
+    <!-- Playlists View -->
+    <div id="view-playlists" class="view-section">
+      <div id="playlists-main-container">
+        <div class="section-header">
+          <span>Your Playlists</span>
+        </div>
+
+        <div class="create-playlist-btn" onclick="openCreatePlaylistModal()">
+          <span>➕ Create New Playlist</span>
+        </div>
+
+        <br>
+        <div class="playlist-grid" id="playlist-grid-container"></div>
+      </div>
+
+      <div id="spotify-playlist-detail-view" style="display:none;">
+        <button class="modal-btn secondary" onclick="backToPlaylistsGrid()" style="margin-bottom: 10px;">← Back to Playlists</button>
+        <div class="spotify-playlist-header">
+          <div class="spotify-pl-info">
+            <div class="spotify-pl-left">
+              <div class="spotify-pl-avatar" id="spotify-pl-avatar-icon">🎧</div>
+              <div>
+                <h2 id="spotify-pl-name" style="font-size: 1.05rem; font-weight: 800; margin-bottom: 2px;">Playlist Name</h2>
+                <p id="spotify-pl-track-count" style="font-size: 0.7rem; color: var(--text-sub);">0 tracks</p>
+              </div>
+            </div>
+            <div class="menu-container">
+              <button class="action-btn" id="pl-detail-menu-btn" style="font-size:1.2rem; padding:4px 8px;" onclick="toggleMenuDropdown('pl-detail-dropdown', event)">⋮</button>
+              <div class="menu-dropdown" id="pl-detail-dropdown" style="right:0;">
+                <div class="menu-item" onclick="promptSortPlaylist('manual')">📑 Manual Serial</div>
+                <div class="menu-item" onclick="promptSortPlaylist('auto')">🔀 Auto Serial (Shuffle)</div>
+                <div class="menu-item" onclick="promptSortPlaylist('name_asc')">🔤 Sort A-Z</div>
+                <div class="menu-item" onclick="promptSortPlaylist('name_desc')">🔤 Sort Z-A</div>
+                <div class="menu-item" onclick="promptSortPlaylist('date_up')">📅 Sort Date (Up)</div>
+                <div class="menu-item" onclick="promptSortPlaylist('date_down')">📅 Sort Date (Down)</div>
+              </div>
+            </div>
+          </div>
+          <div class="spotify-pl-buttons">
+            <button class="btn-upload-header" onclick="playCurrentPlaylist()">▶ Play All</button>
+            <button class="btn-upload-header" style="background: rgba(255,255,255,0.15); color: #fff;" onclick="shuffleCurrentPlaylist()">🔀 Shuffle</button>
+          </div>
+        </div>
+
+        <div class="big-add-songs-btn" onclick="openPlaylistAddSongsModal()">
+          <span>➕ Add Songs to Playlist</span>
+        </div>
+
+        <div class="track-list" id="spotify-playlist-tracks-container"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Floating Player Dock -->
+  <div class="player-dock" id="player-dock">
+    <div class="range-slider-container" id="dock-progress-container" onmousedown="startSeek(event, 'dock')" ontouchstart="startSeek(event, 'dock')">
+      <div class="range-track">
+        <div class="range-fill" id="dock-progress-fill"></div>
+        <div class="range-thumb" id="dock-progress-thumb"></div>
+      </div>
+    </div>
+    
+    <div class="player-main-row">
+      <div class="now-playing" onclick="openFullscreenPlayer()">
+        <div class="track-thumb" id="dock-thumb">🎵</div>
+        <div class="now-playing-info">
+          <h4 id="now-playing-title">Ready to play</h4>
+          <p id="now-playing-type">Local Media</p>
+        </div>
+      </div>
+
+      <div class="pro-controls">
+        <button class="ctrl-btn" onclick="playPrevious()">⏮</button>
+        <button class="master-play-btn" id="master-play-btn" onclick="togglePlay()">▶</button>
+        <button class="ctrl-btn" onclick="playNext()">⏭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Player Interface Modal -->
+  <div class="fullscreen-player" id="fullscreen-player">
+    <div class="fs-header">
+      <button class="fs-close-btn" onclick="closeFullscreenPlayer()">⬇</button>
+      <span style="font-size: 0.78rem; font-weight: 700; letter-spacing: 1px;">NOW PLAYING</span>
+      <div style="display: flex; gap: 6px;">
+        <button class="ctrl-btn" id="rotate-video-btn" style="display:none;" onclick="rotateVideoDisplay()" title="Rotate Video">🔄</button>
+        <button class="ctrl-btn" onclick="toggleLikeCurrentTrack()" id="fs-like-btn" title="Favorite">❤️</button>
+      </div>
+    </div>
+
+    <div class="fs-media-display">
+      <div class="fs-artwork" id="fs-artwork-icon">🎵</div>
+      <video id="fs-video-player" playsinline></video>
+    </div>
+
+    <div class="fs-track-info">
+      <h2 id="fs-title">Song Title</h2>
+      <p id="fs-subtitle">Local Audio</p>
+    </div>
+
+    <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 2px;">
+      <button class="skip-badge-btn" onclick="toggleProPanel('eq-panel')">🎛️ Equalizer</button>
+      <button class="skip-badge-btn" onclick="toggleProPanel('lyrics-panel')">📜 Lyrics</button>
+      <button class="skip-badge-btn" id="timer-badge-btn" onclick="toggleProPanel('timer-panel')">⏱️ Timer</button>
+    </div>
+
+    <div class="pro-panel-box" id="eq-panel">
+      <span style="font-size: 0.72rem; font-weight: 700; color: var(--accent-green);">Sound Equalizer</span>
+      <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.7rem;">
+        <div>Bass:
+          <div class="range-slider-container" onmousedown="startEQSeek(event, 'bass')" ontouchstart="startEQSeek(event, 'bass')">
+            <div class="range-track"><div class="range-fill" id="eq-bass-fill" style="width:50%;"></div><div class="range-thumb" id="eq-bass-thumb" style="left:50%;"></div></div>
+          </div>
+        </div>
+        <div>Mid:
+          <div class="range-slider-container" onmousedown="startEQSeek(event, 'mid')" ontouchstart="startEQSeek(event, 'mid')">
+            <div class="range-track"><div class="range-fill" id="eq-mid-fill" style="width:50%;"></div><div class="range-thumb" id="eq-mid-thumb" style="left:50%;"></div></div>
+          </div>
+        </div>
+        <div>Treble:
+          <div class="range-slider-container" onmousedown="startEQSeek(event, 'treble')" ontouchstart="startEQSeek(event, 'treble')">
+            <div class="range-track"><div class="range-fill" id="eq-treble-fill" style="width:50%;"></div><div class="range-thumb" id="eq-treble-thumb" style="left:50%;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pro-panel-box" id="lyrics-panel">
+      <span style="font-size: 0.72rem; font-weight: 700; color: var(--accent-green);">Live Lyrics / Notes</span>
+      <textarea id="fs-lyrics-textarea" placeholder="Type lyrics here..." oninput="saveCurrentTrackLyrics(this.value)"></textarea>
+    </div>
+
+    <div class="pro-panel-box" id="timer-panel">
+      <span style="font-size: 0.72rem; font-weight: 700; color: var(--accent-green);" id="timer-status-title">Sleep Timer (Off)</span>
+      <div style="display: flex; gap: 6px; justify-content: space-between;">
+        <button class="modal-btn secondary" style="font-size: 0.68rem; padding: 3px 6px;" onclick="setSleepTimer(15)">15m</button>
+        <button class="modal-btn secondary" style="font-size: 0.68rem; padding: 3px 6px;" onclick="setSleepTimer(30)">30m</button>
+        <button class="modal-btn secondary" style="font-size: 0.68rem; padding: 3px 6px;" onclick="setSleepTimer(60)">60m</button>
+        <button class="modal-btn danger" style="font-size: 0.68rem; padding: 3px 6px;" onclick="clearSleepTimer()">Off</button>
+      </div>
+    </div>
+
+    <div class="fs-controls-container">
+      <div class="range-slider-container" id="fs-progress-container" onmousedown="startSeek(event, 'fs')" ontouchstart="startSeek(event, 'fs')">
+        <div class="range-track" style="height: 7px;">
+          <div class="range-fill" id="fs-progress-fill"></div>
+          <div class="range-thumb" id="fs-progress-thumb" style="width: 16px; height: 16px;"></div>
+        </div>
+      </div>
+      <div class="fs-time-row">
+        <span id="fs-current-time">0:00</span>
+        <span id="fs-total-duration">0:00</span>
+      </div>
+
+      <div class="fs-main-btns">
+        <button class="ctrl-btn" id="fs-shuffle-btn" onclick="toggleShuffle()" title="Shuffle">🔀</button>
+        <button class="skip-badge-btn" onclick="skipTime(-10)">↺ 10s</button>
+        <button class="master-play-btn" id="fs-master-play" onclick="togglePlay()" style="width: 44px; height: 44px; font-size: 1.1rem;">▶</button>
+        <button class="skip-badge-btn" onclick="skipTime(10)">10s ↻</button>
+        <button class="ctrl-btn" id="fs-repeat-btn" onclick="toggleRepeatMode()" style="position: relative;" title="Repeat">🔁 <span id="repeat-badge" style="font-size: 0.55rem; position: absolute; top:-4px; right:-6px; font-weight:bold;">OFF</span></button>
+      </div>
+
+      <div class="fs-extra-controls">
+        <div>
+          <span>Speed: </span>
+          <select class="fs-select" id="playback-speed" onchange="changeSpeed(this.value)">
+            <option value="0.75">0.75x</option>
+            <option value="1" selected>1x</option>
+            <option value="1.25">1.25x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2x</option>
+          </select>
+        </div>
+        <div id="mode-selector-wrapper" style="display:none;">
+          <span>Mode: </span>
+          <select class="fs-select" id="media-mode-select" onchange="changeMediaMode(this.value)">
+            <option value="audio">Audio</option>
+            <option value="video">Video</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preferred Storage Modal -->
+  <div class="modal-overlay" id="modal-preferred-storage">
+    <div class="modal-card" style="max-height: 80vh;">
+      <h3 style="font-size: 1rem;">📁 Preferred Storage</h3>
+      <p style="font-size: 0.72rem; color: var(--text-sub);">Current Path: <span id="current-storage-path" style="color:var(--accent-green);">/Internal Storage/QevrinoDownloads</span></p>
+      <div style="display: flex; gap: 6px; margin-top: 4px;">
+        <input type="text" id="new-folder-name" placeholder="Create new folder..." style="flex:1;">
+        <button class="modal-btn primary" onclick="createNewStorageFolder()">Create</button>
+      </div>
+      <div id="storage-folders-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; margin-top: 8px;"></div>
+      <div class="modal-btns" style="margin-top: 10px;">
+        <button class="modal-btn secondary" onclick="closeModal('modal-preferred-storage')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backup & Save As Song Selector Modal -->
+  <div class="modal-overlay" id="modal-backup-selector">
+    <div class="modal-card" style="max-height: 85vh;">
+      <h3 id="backup-modal-title" style="font-size: 1rem;">💾 Select Songs for Download</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; margin: 4px 0;">
+        <span id="backup-selected-count">0 selected</span>
+        <div style="display: flex; gap: 6px;">
+          <button class="modal-btn secondary" style="padding: 3px 8px; font-size: 0.68rem;" onclick="toggleSelectAllBackup(true)">Select All</button>
+          <button class="modal-btn secondary" style="padding: 3px 8px; font-size: 0.68rem;" onclick="toggleSelectAllBackup(false)">Deselect All</button>
+        </div>
+      </div>
+      <div id="backup-songs-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 6px;"></div>
+      <div class="modal-btns" style="margin-top: 10px;">
+        <button class="modal-btn secondary" onclick="closeModal('modal-backup-selector')">Cancel</button>
+        <button class="modal-btn primary" onclick="executeBackupExport()">Confirm & Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-confirm-delete">
+    <div class="modal-card">
+      <h3 id="delete-modal-title" style="font-size: 1rem; color: #ff4d4d;">⚠️ Confirm Delete</h3>
+      <p id="delete-modal-text" style="font-size: 0.8rem; color: var(--text-sub);">Are you sure?</p>
+      <div class="modal-btns">
+        <button class="modal-btn secondary" onclick="closeModal('modal-confirm-delete')">Cancel</button>
+        <button class="modal-btn danger" id="confirm-delete-btn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-edit-track">
+    <div class="modal-card">
+      <h3 style="font-size: 1rem;">✏️ Edit Track</h3>
+      <label>Track Title</label>
+      <input type="text" id="edit-track-title-input" placeholder="Song Name...">
+      <label>Custom Cover (Optional)</label>
+      <input type="file" id="edit-track-cover-input" accept="image/*">
+      <div class="modal-btns">
+        <button class="modal-btn secondary" onclick="closeModal('modal-edit-track')">Cancel</button>
+        <button class="modal-btn primary" id="confirm-edit-track-btn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-theme-picker">
+    <div class="modal-card">
+      <h3 style="font-size: 1rem;">🎨 Choose Accent Color</h3>
+      <div style="display: flex; gap: 10px; justify-content: space-around; padding: 8px 0;">
+        <div onclick="setAccentTheme('#1ed760', 'rgba(30, 215, 96, 0.35)')" style="width:32px; height:32px; border-radius:50%; background:#1ed760; cursor:pointer;"></div>
+        <div onclick="setAccentTheme('#3b82f6', 'rgba(59, 130, 246, 0.35)')" style="width:32px; height:32px; border-radius:50%; background:#3b82f6; cursor:pointer;"></div>
+        <div onclick="setAccentTheme('#a855f7', 'rgba(168, 85, 247, 0.35)')" style="width:32px; height:32px; border-radius:50%; background:#a855f7; cursor:pointer;"></div>
+        <div onclick="setAccentTheme('#f97316', 'rgba(249, 115, 22, 0.35)')" style="width:32px; height:32px; border-radius:50%; background:#f97316; cursor:pointer;"></div>
+      </div>
+      <div class="modal-btns">
+        <button class="modal-btn secondary" onclick="closeModal('modal-theme-picker')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-playlist-add-songs">
+    <div class="modal-card" style="max-height: 75vh;">
+      <h3 style="font-size: 1rem;">🎵 Add Songs to Playlist</h3>
+      <input type="text" id="modal-search-songs" placeholder="Search songs..." oninput="filterModalSongs(this.value)">
+      <div id="modal-songs-selection-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto;"></div>
+      <div class="modal-btns">
+        <button class="modal-btn primary" onclick="closeModal('modal-playlist-add-songs')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" id="nav-home" onclick="switchTab('home')">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="nav-item" id="nav-playlists" onclick="switchTab('playlists')">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h11v2H4zm14 0v6l5-3z"/></svg>
+      <span>Playlists</span>
+    </button>
+  </div>
+
+  <div class="modal-overlay" id="modal-create-playlist">
+    <div class="modal-card">
+      <h3 id="modal-pl-title" style="font-size: 1rem;">Create Playlist</h3>
+      <label>Playlist Name</label>
+      <input type="text" id="pl-name-input" placeholder="Playlist Name...">
+      <label>Icon Emoji (Optional)</label>
+      <input type="text" id="pl-icon-input" value="🎧">
+      <label>Cover Image (Optional)</label>
+      <input type="file" id="pl-dp-input" accept="image/*">
+      <div class="modal-btns">
+        <button class="modal-btn secondary" onclick="closeModal('modal-create-playlist')">Cancel</button>
+        <button class="modal-btn primary" id="modal-pl-submit-btn" onclick="confirmCreatePlaylist()">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* eslint-disable */
+    let db = null;
+    let currentStoragePath = localStorage.getItem('qevrino_storage_path') || '/Internal Storage/QevrinoDownloads';
+    let customFolders = JSON.parse(localStorage.getItem('qevrino_custom_folders') || '["Download", "Music", "QevrinoMedia", "BackupData"]');
+    let backupExportMode = 'backup';
+
+    const request = indexedDB.open("QevrinoLocalDB", 20);
+
+    request.onupgradeneeded = (e) => {
+      db = e.target.result;
+      if (!db.objectStoreNames.contains("mediaFiles")) db.createObjectStore("mediaFiles", { keyPath: "id" });
+      if (!db.objectStoreNames.contains("playlists")) db.createObjectStore("playlists", { keyPath: "id" });
+    };
+
+    request.onsuccess = (e) => {
+      db = e.target.result;
+      loadStoredData();
+      restoreActiveTabState();
+      loadThemePreference();
+    };
+
+    let mediaList = [];
+    let playlists = [];
+    let currentPlaylistId = null;
+    let currentIndex = 0;
+    let isShuffle = false;
+    let repeatMode = 0; 
+    let currentTrackRepeatCount = 0;
+    let activePlayQueue = [];
+    let editingPlaylistId = null;
+    let deleteCallbackAction = null;
+    let videoRotationDegree = 0;
+    let backPressCount = 0;
+    let backPressTimer = null;
+    let sleepTimerTimeout = null;
+    let sleepTimerInterval = null;
+    let sleepTimerSecondsLeft = 0;
+    let currentSmartFilterMode = 'all';
+
+    let audioCtx = null, sourceNode = null, bassNode = null, midNode = null, trebleNode = null;
+    let eqValues = { bass: 0, mid: 0, treble: 0 };
+
+    const audioPlayer = document.getElementById('main-audio-player');
+    const fsVideoPlayer = document.getElementById('fs-video-player');
+    const playerDock = document.getElementById('player-dock');
+    const masterPlayBtn = document.getElementById('master-play-btn');
+    const fsMasterPlay = document.getElementById('fs-master-play');
+
+    window.history.pushState({view: 'home'}, '', '');
+
+    window.addEventListener('popstate', () => {
+      handleStepByStepBack();
+    });
+
+    function handleStepByStepBack() {
+      if (document.getElementById('fullscreen-player').style.display === 'flex') {
+        closeFullscreenPlayer();
+        return;
+      }
+      if (currentPlaylistId) {
+        backToPlaylistsGrid();
+        return;
+      }
+      if (currentSmartFilterMode !== 'all') {
+        switchSmartFilter('all');
+        return;
+      }
+      const activeTab = localStorage.getItem('qevrino_active_tab') || 'home';
+      if (activeTab === 'playlists') {
+        switchTab('home');
+        return;
+      }
+      if (backPressCount === 0) {
+        backPressCount = 1;
+        showToast("⚠️ Press back again to exit");
+        window.history.pushState({view: 'home'}, '', '');
+        if (backPressTimer) clearTimeout(backPressTimer);
+        backPressTimer = setTimeout(() => { backPressCount = 0; }, 2500);
+      } else {
+        window.close();
+      }
+    }
+
+    function showToast(text) {
+      const toast = document.getElementById('toast-msg');
+      toast.innerText = text;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2000);
+    }
+
+    function switchTab(tab) {
+      localStorage.setItem('qevrino_active_tab', tab);
+      document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      
+      if (tab === 'home') {
+        document.getElementById('view-home').classList.add('active');
+        document.getElementById('nav-home').classList.add('active');
+        renderTracks(mediaList);
+      } else {
+        document.getElementById('view-playlists').classList.add('active');
+        document.getElementById('nav-playlists').classList.add('active');
+        backToPlaylistsGrid();
+      }
+    }
+
+    function restoreActiveTabState() {
+      const savedTab = localStorage.getItem('qevrino_active_tab') || 'home';
+      switchTab(savedTab);
+    }
+
+    function triggerMp3Upload() { document.getElementById('mp3-file-input').click(); }
+    function triggerMp4Upload() { document.getElementById('mp4-file-input').click(); }
+
+    document.getElementById('mp3-file-input').addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      showToast(`⏳ Importing ${files.length} MP3 files...`);
+      for (let file of files) {
+        const id = 'track_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+        const mediaData = {
+          id: id,
+          name: file.name.replace(/\.[^/.]+$/, ""),
+          blob: file,
+          coverBlob: null,
+          type: 'Audio (MP3)',
+          isVideo: false,
+          createdAt: Date.now(),
+          isFavorite: false,
+          playCount: 0,
+          lyrics: ""
+        };
+        await saveMediaToDB(mediaData);
+        mediaList.push(mediaData);
+      }
+      showToast(`✅ Added ${files.length} MP3 tracks!`);
+      renderTracks(getFilteredTracks());
+      e.target.value = '';
+    });
+
+    document.getElementById('mp4-file-input').addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      showToast(`⏳ Importing ${files.length} MP4 files...`);
+      for (let file of files) {
+        const id = 'track_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+        const mediaData = {
+          id: id,
+          name: file.name.replace(/\.[^/.]+$/, ""),
+          blob: file,
+          coverBlob: null,
+          type: 'Video (MP4)',
+          isVideo: true,
+          createdAt: Date.now(),
+          isFavorite: false,
+          playCount: 0,
+          lyrics: ""
+        };
+        await saveMediaToDB(mediaData);
+        mediaList.push(mediaData);
+      }
+      showToast(`✅ Added ${files.length} MP4 videos!`);
+      renderTracks(getFilteredTracks());
+      e.target.value = '';
+    });
+
+    function saveMediaToDB(data) {
+      return new Promise((resolve) => {
+        if (!db) return resolve(false);
+        const tx = db.transaction("mediaFiles", "readwrite");
+        tx.objectStore("mediaFiles").put(data);
+        tx.oncomplete = () => resolve(true);
+      });
+    }
+
+    function savePlaylistToDB(pl) {
+      return new Promise((resolve) => {
+        if (!db) return resolve(false);
+        const tx = db.transaction("playlists", "readwrite");
+        tx.objectStore("playlists").put(pl);
+        tx.oncomplete = () => resolve(true);
+      });
+    }
+
+    function loadStoredData() {
+      if (!db) return;
+      const tx = db.transaction(["mediaFiles", "playlists"], "readonly");
+      tx.objectStore("mediaFiles").getAll().onsuccess = (e) => {
+        mediaList = e.target.result || [];
+        renderTracks(getFilteredTracks());
+      };
+      tx.objectStore("playlists").getAll().onsuccess = (e) => {
+        playlists = e.target.result || [];
+        renderPlaylists();
+      };
+    }
+
+    function switchSmartFilter(mode) {
+      currentSmartFilterMode = mode;
+      const titleEl = document.getElementById('home-section-title');
+      if (mode === 'favorites') titleEl.innerText = "❤️ Favorites";
+      else if (mode === 'most_played') titleEl.innerText = "🔥 Most Played";
+      else titleEl.innerText = "All Tracks";
+      renderTracks(getFilteredTracks());
+    }
+
+    function getFilteredTracks() {
+      if (currentSmartFilterMode === 'favorites') return mediaList.filter(t => t.isFavorite);
+      if (currentSmartFilterMode === 'most_played') return [...mediaList].sort((a, b) => (b.playCount || 0) - (a.playCount || 0));
+      return mediaList;
+    }
+
+    function renderTracks(list) {
+      const container = document.getElementById('home-track-list');
+      document.getElementById('track-count').innerText = `${list.length} tracks`;
+      container.innerHTML = '';
+
+      if (!list.length) {
+        container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-sub);">No tracks found.</div>`;
+        return;
+      }
+
+      list.forEach((track, idx) => {
+        const card = document.createElement('div');
+        const isActive = activePlayQueue[currentIndex]?.id === track.id;
+        card.className = `track-card ${isActive ? 'active' : ''}`;
+        let coverStyle = track.coverBlob ? `background-image: url('${URL.createObjectURL(track.coverBlob)}');` : '';
+
+        card.innerHTML = `
+          <div class="track-info-flex">
+            <div class="track-thumb" style="${coverStyle}">${track.coverBlob ? '' : (track.isVideo ? '🎬' : '🎵')}</div>
+            <div class="track-details">
+              <h4>${track.name} ${track.isFavorite ? '❤️' : ''}</h4>
+              <p>${track.type} • Plays: ${track.playCount || 0}</p>
+            </div>
+          </div>
+          <div class="track-actions">
+            <div class="menu-container">
+              <button class="action-btn" id="home-menu-btn-${track.id}" style="font-size:1.2rem; padding:4px 8px;" onclick="toggleMenuDropdown('home-menu-${track.id}', event)">⋮</button>
+              <div class="menu-dropdown" id="home-menu-${track.id}">
+                <div class="menu-item" onclick="openEditTrackModal('${track.id}')">Rename</div>
+                <div class="menu-item danger" onclick="confirmDeleteTrack('${track.id}', '${track.name.replace(/'/g, "\\'")}')">Delete</div>
+              </div>
+            </div>
+          </div>
+        `;
+        card.querySelector('.track-info-flex').onclick = () => {
+          activePlayQueue = list;
+          playTrack(idx, 'home');
+        };
+        container.appendChild(card);
+      });
+    }
+
+    function openEditTrackModal(trackId) {
+      const track = mediaList.find(t => t.id === trackId);
+      if (!track) return;
+      document.getElementById('edit-track-title-input').value = track.name;
+      document.getElementById('edit-track-cover-input').value = "";
+      
+      document.getElementById('confirm-edit-track-btn').onclick = async () => {
+        const newTitle = document.getElementById('edit-track-title-input').value.trim();
+        const coverInput = document.getElementById('edit-track-cover-input');
+        if (newTitle) track.name = newTitle;
+        if (coverInput.files && coverInput.files[0]) track.coverBlob = coverInput.files[0];
+        await saveMediaToDB(track);
+        renderTracks(getFilteredTracks());
+        if (currentPlaylistId) selectPlaylist(currentPlaylistId);
+        closeModal('modal-edit-track');
+        showToast("✅ Updated!");
+      };
+      document.getElementById('modal-edit-track').style.display = 'flex';
+    }
+
+    function confirmDeleteTrack(trackId, trackName) {
+      document.getElementById('delete-modal-title').innerText = "⚠️ Delete Track";
+      document.getElementById('delete-modal-text').innerText = `Delete "${trackName}"?`;
+      deleteCallbackAction = async () => {
+        if (!db) return;
+        const tx = db.transaction("mediaFiles", "readwrite");
+        tx.objectStore("mediaFiles").delete(trackId);
+        mediaList = mediaList.filter(t => t.id !== trackId);
+        playlists.forEach(async (pl) => {
+          if (pl.trackIds.includes(trackId)) {
+            pl.trackIds = pl.trackIds.filter(id => id !== trackId);
+            await savePlaylistToDB(pl);
+          }
+        });
+        renderTracks(getFilteredTracks());
+        if (currentPlaylistId) selectPlaylist(currentPlaylistId);
+        closeModal('modal-confirm-delete');
+        showToast("🗑️ Deleted!");
+      };
+      document.getElementById('confirm-delete-btn').onclick = deleteCallbackAction;
+      document.getElementById('modal-confirm-delete').style.display = 'flex';
+    }
+
+    function playTrack(idx, source = 'all') {
+      if (source === 'home') activePlayQueue = getFilteredTracks();
+      currentIndex = idx;
+      currentTrackRepeatCount = 0;
+      const track = activePlayQueue[idx];
+      if (!track) return;
+
+      track.playCount = (track.playCount || 0) + 1;
+      saveMediaToDB(track);
+
+      const url = URL.createObjectURL(track.blob);
+      const dockThumb = document.getElementById('dock-thumb');
+      const fsArtworkIcon = document.getElementById('fs-artwork-icon');
+
+      playerDock.style.display = 'flex';
+      document.getElementById('now-playing-title').innerText = track.name;
+      document.getElementById('now-playing-type').innerText = track.type;
+
+      if (track.coverBlob) {
+        const coverUrl = URL.createObjectURL(track.coverBlob);
+        dockThumb.style.backgroundImage = `url('${coverUrl}')`;
+        dockThumb.innerText = '';
+        fsArtworkIcon.style.backgroundImage = `url('${coverUrl}')`;
+        fsArtworkIcon.innerText = '';
+      } else {
+        dockThumb.style.backgroundImage = 'none';
+        dockThumb.innerText = track.isVideo ? '🎬' : '🎵';
+        fsArtworkIcon.style.backgroundImage = 'none';
+        fsArtworkIcon.innerText = track.isVideo ? '🎬' : '🎵';
+      }
+
+      document.getElementById('fs-title').innerText = track.name;
+      document.getElementById('fs-subtitle').innerText = track.type;
+      document.getElementById('fs-lyrics-textarea').value = track.lyrics || "";
+      updateLikeButtonUI(track.isFavorite);
+
+      if (track.isVideo) {
+        document.getElementById('mode-selector-wrapper').style.display = 'block';
+        document.getElementById('rotate-video-btn').style.display = 'block';
+        audioPlayer.pause();
+        audioPlayer.src = '';
+        fsVideoPlayer.src = url;
+        changeMediaMode('video');
+      } else {
+        document.getElementById('mode-selector-wrapper').style.display = 'none';
+        document.getElementById('rotate-video-btn').style.display = 'none';
+        fsVideoPlayer.pause();
+        fsVideoPlayer.src = '';
+        changeMediaMode('audio');
+        audioPlayer.src = url;
+        initWebAudioAPI();
+        audioPlayer.play();
+      }
+
+      masterPlayBtn.innerText = '⏸';
+      fsMasterPlay.innerText = '⏸';
+      setupMediaSession(track);
+
+      renderTracks(getFilteredTracks());
+      if (currentPlaylistId) selectPlaylist(currentPlaylistId);
+    }
+
+    function setupMediaSession(track) {
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: track.name,
+          artist: 'Qevrino Media Hub',
+          album: track.type,
+          artwork: track.coverBlob ? [{ src: URL.createObjectURL(track.coverBlob), sizes: '512x512', type: 'image/png' }] : []
+        });
+        navigator.mediaSession.setActionHandler('play', () => togglePlay());
+        navigator.mediaSession.setActionHandler('pause', () => togglePlay());
+        navigator.mediaSession.setActionHandler('previoustrack', () => playPrevious());
+        navigator.mediaSession.setActionHandler('nexttrack', () => playNext());
+      }
+    }
+
+    function initWebAudioAPI() {
+      if (audioCtx) return;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        sourceNode = audioCtx.createMediaElementSource(audioPlayer);
+        bassNode = audioCtx.createBiquadFilter(); bassNode.type = "lowshelf"; bassNode.frequency.value = 250;
+        midNode = audioCtx.createBiquadFilter(); midNode.type = "peaking"; midNode.frequency.value = 1500;
+        trebleNode = audioCtx.createBiquadFilter(); trebleNode.type = "highshelf"; trebleNode.frequency.value = 4000;
+        sourceNode.connect(bassNode); bassNode.connect(midNode); midNode.connect(trebleNode); trebleNode.connect(audioCtx.destination);
+      } catch (err) {}
+    }
+
+    function setSleepTimer(minutes) {
+      if (sleepTimerTimeout) clearTimeout(sleepTimerTimeout);
+      if (sleepTimerInterval) clearInterval(sleepTimerInterval);
+      
+      sleepTimerSecondsLeft = minutes * 60;
+      const timerBtn = document.getElementById('timer-badge-btn');
+      const timerTitle = document.getElementById('timer-status-title');
+      timerBtn.classList.add('timer-active');
+
+      sleepTimerInterval = setInterval(() => {
+        sleepTimerSecondsLeft--;
+        let m = Math.floor(sleepTimerSecondsLeft / 60);
+        let s = sleepTimerSecondsLeft % 60;
+        timerTitle.innerText = `Timer Active (${m}:${s < 10 ? '0' : ''}${s} left)`;
+        timerBtn.innerText = `⏱️ ${m}m`;
+        if (sleepTimerSecondsLeft <= 0) {
+          clearInterval(sleepTimerInterval);
+          audioPlayer.pause(); fsVideoPlayer.pause();
+          masterPlayBtn.innerText = '▶'; fsMasterPlay.innerText = '▶'; playerDock.style.display = 'none';
+          timerBtn.classList.remove('timer-active');
+          timerBtn.innerText = '⏱️ Timer';
+          timerTitle.innerText = 'Sleep Timer (Off)';
+          showToast("⏱️ Sleep timer paused media");
+        }
+      }, 1000);
+
+      showToast(`⏱️ Timer set for ${minutes}m`);
+    }
+
+    function clearSleepTimer() {
+      if (sleepTimerTimeout) clearTimeout(sleepTimerTimeout);
+      if (sleepTimerInterval) clearInterval(sleepTimerInterval);
+      sleepTimerSecondsLeft = 0;
+      const timerBtn = document.getElementById('timer-badge-btn');
+      timerBtn.classList.remove('timer-active');
+      timerBtn.innerText = '⏱️ Timer';
+      document.getElementById('timer-status-title').innerText = 'Sleep Timer (Off)';
+      showToast("⏱️ Timer cancelled");
+    }
+
+    function toggleProPanel(panelId) {
+      document.querySelectorAll('.pro-panel-box').forEach(p => { if (p.id !== panelId) p.classList.remove('show'); });
+      document.getElementById(panelId).classList.toggle('show');
+    }
+
+    function toggleLikeCurrentTrack() {
+      const track = activePlayQueue[currentIndex];
+      if (!track) return;
+      track.isFavorite = !track.isFavorite;
+      saveMediaToDB(track);
+      updateLikeButtonUI(track.isFavorite);
+      showToast(track.isFavorite ? "❤️ Added to Favorites" : "💔 Removed from Favorites");
+      renderTracks(getFilteredTracks());
+    }
+
+    function updateLikeButtonUI(isFav) {
+      document.getElementById('fs-like-btn').style.color = isFav ? '#ff4d4d' : '#fff';
+    }
+
+    function saveCurrentTrackLyrics(text) {
+      const track = activePlayQueue[currentIndex];
+      if (!track) return;
+      track.lyrics = text;
+      saveMediaToDB(track);
+    }
+
+    function openPreferredStorageModal() {
+      document.getElementById('current-storage-path').innerText = currentStoragePath;
+      renderStorageFolders();
+      document.getElementById('modal-preferred-storage').style.display = 'flex';
+    }
+
+    function renderStorageFolders() {
+      const container = document.getElementById('storage-folders-list');
+      container.innerHTML = '';
+      customFolders.forEach(folder => {
+        const item = document.createElement('div');
+        item.className = 'track-card';
+        item.style.padding = '8px 12px';
+        const isSelected = currentStoragePath.includes(folder);
+        item.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span>📁</span>
+            <span style="font-size:0.8rem; font-weight:600;">/Internal Storage/${folder}</span>
+          </div>
+          <span style="font-size:0.75rem; color:var(--accent-green); font-weight:700;">${isSelected ? 'Selected ✓' : 'Select'}</span>
+        `;
+        item.onclick = () => {
+          currentStoragePath = `/Internal Storage/${folder}`;
+          localStorage.setItem('qevrino_storage_path', currentStoragePath);
+          document.getElementById('current-storage-path').innerText = currentStoragePath;
+          renderStorageFolders();
+          showToast(`📁 Storage set to ${folder}`);
+        };
+        container.appendChild(item);
+      });
+    }
+
+    function createNewStorageFolder() {
+      const input = document.getElementById('new-folder-name');
+      const folderName = input.value.trim();
+      if (!folderName) return;
+      if (!customFolders.includes(folderName)) {
+        customFolders.push(folderName);
+        localStorage.setItem('qevrino_custom_folders', JSON.stringify(customFolders));
+      }
+      currentStoragePath = `/Internal Storage/${folderName}`;
+      localStorage.setItem('qevrino_storage_path', currentStoragePath);
+      input.value = '';
+      renderStorageFolders();
+      document.getElementById('current-storage-path').innerText = currentStoragePath;
+      showToast(`✅ Folder created & selected!`);
+    }
+
+    function openBackupSelectionModal(mode) {
+      backupExportMode = mode;
+      document.getElementById('backup-modal-title').innerText = mode === 'backup' ? '💾 Select Songs to Download' : '📥 Save As MP3/MP4 File';
+      renderBackupSongsList();
+      document.getElementById('modal-backup-selector').style.display = 'flex';
+    }
+
+    function renderBackupSongsList() {
+      const container = document.getElementById('backup-songs-list');
+      container.innerHTML = '';
+      if (!mediaList.length) {
+        container.innerHTML = `<div style="text-align:center; color:var(--text-sub); padding:20px;">No tracks available.</div>`;
+        updateBackupCount();
+        return;
+      }
+
+      mediaList.forEach(track => {
+        const item = document.createElement('div');
+        item.style.display = 'flex';
+        item.style.alignItems = 'center';
+        item.style.gap = '10px';
+        item.style.padding = '6px 8px';
+        item.style.background = 'var(--card-bg)';
+        item.style.borderRadius = '8px';
+        item.style.cursor = 'pointer';
+
+        item.innerHTML = `
+          <input type="checkbox" class="backup-track-checkbox" data-id="${track.id}" checked style="width:16px; height:16px; accent-color:var(--accent-green); cursor:pointer;">
+          <div style="font-size:0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">${track.name}</div>
+          <div style="font-size:0.68rem; color:var(--text-sub);">${track.type}</div>
+        `;
+        item.onclick = (e) => {
+          if (e.target.tagName !== 'INPUT') {
+            const chk = item.querySelector('input');
+            chk.checked = !chk.checked;
+            updateBackupCount();
+          }
+        };
+        item.querySelector('input').onchange = () => updateBackupCount();
+        container.appendChild(item);
+      });
+      updateBackupCount();
+    }
+
+    function toggleSelectAllBackup(select) {
+      document.querySelectorAll('.backup-track-checkbox').forEach(chk => { chk.checked = select; });
+      updateBackupCount();
+    }
+
+    function updateBackupCount() {
+      const selectedCount = document.querySelectorAll('.backup-track-checkbox:checked').length;
+      document.getElementById('backup-selected-count').innerText = `${selectedCount} of ${mediaList.length} selected`;
+    }
+
+    async function executeBackupExport() {
+      const checkedBoxes = document.querySelectorAll('.backup-track-checkbox:checked');
+      const selectedIds = Array.from(checkedBoxes).map(chk => chk.getAttribute('data-id'));
+      
+      if (!selectedIds.length) {
+        showToast("⚠️ Please select at least one song!");
+        return;
+      }
+
+      const selectedTracks = mediaList.filter(t => selectedIds.includes(t.id));
+      showToast(`⏳ Saving ${selectedTracks.length} files...`);
+
+      for (let i = 0; i < selectedTracks.length; i++) {
+        let track = selectedTracks[i];
+        if (!track.blob) continue;
+
+        let mimeType = track.isVideo ? 'video/mp4' : 'audio/mpeg';
+        let cleanBlob = new Blob([track.blob], { type: mimeType });
+        
+        const url = URL.createObjectURL(cleanBlob);
+        const dl = document.createElement('a');
+        dl.href = url;
+        
+        let ext = track.isVideo ? '.mp4' : '.mp3';
+        let safeName = track.name.replace(/[^a-zA-Z0-9_\u0980-\u09FF\s-]/g, '_');
+        if (!safeName.endsWith('.mp3') && !safeName.endsWith('.mp4')) {
+          safeName += ext;
+        }
+        dl.download = safeName;
+        dl.style.display = 'none';
+
+        document.body.appendChild(dl);
+        dl.click();
+        document.body.removeChild(dl);
+        
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+        await new Promise(res => setTimeout(res, 500));
+      }
+
+      closeModal('modal-backup-selector');
+      showToast(`✅ Successfully downloaded!`);
+    }
+
+    async function importAppData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.playlists) { for (let pl of imported.playlists) await savePlaylistToDB(pl); }
+          showToast("📂 Restored Successfully!");
+          loadStoredData();
+        } catch (err) { showToast("⚠️ Invalid file"); }
+      };
+      reader.readAsText(file);
+    }
+
+    function setAccentTheme(hexColor, glowColor) {
+      document.documentElement.style.setProperty('--accent-green', hexColor);
+      document.documentElement.style.setProperty('--accent-glow', glowColor);
+      localStorage.setItem('qevrino_theme_hex', hexColor);
+      localStorage.setItem('qevrino_theme_glow', glowColor);
+      closeModal('modal-theme-picker');
+      showToast("🎨 Theme Updated!");
+    }
+
+    function loadThemePreference() {
+      const hex = localStorage.getItem('qevrino_theme_hex');
+      const glow = localStorage.getItem('qevrino_theme_glow');
+      if (hex && glow) {
+        document.documentElement.style.setProperty('--accent-green', hex);
+        document.documentElement.style.setProperty('--accent-glow', glow);
+      }
+    }
+
+    function openThemePicker() { document.getElementById('modal-theme-picker').style.display = 'flex'; }
+
+    function rotateVideoDisplay() {
+      videoRotationDegree = (videoRotationDegree + 90) % 360;
+      fsVideoPlayer.style.transform = `rotate(${videoRotationDegree}deg)`;
+      showToast(`🔄 Rotated ${videoRotationDegree}°`);
+    }
+
+    function changeMediaMode(mode) {
+      if (mode === 'video') {
+        fsVideoPlayer.style.display = 'block';
+        document.getElementById('fs-artwork-icon').style.display = 'none';
+        fsVideoPlayer.play(); audioPlayer.pause();
+      } else {
+        fsVideoPlayer.style.display = 'none';
+        document.getElementById('fs-artwork-icon').style.display = 'flex';
+        fsVideoPlayer.pause(); audioPlayer.play();
+      }
+    }
+
+    function togglePlay() {
+      const activeEl = fsVideoPlayer.style.display === 'block' ? fsVideoPlayer : audioPlayer;
+      if (activeEl.paused) { activeEl.play(); masterPlayBtn.innerText = '⏸'; fsMasterPlay.innerText = '⏸'; }
+      else { activeEl.pause(); masterPlayBtn.innerText = '▶'; fsMasterPlay.innerText = '▶'; }
+    }
+
+    function playNext() {
+      if (!activePlayQueue.length) return;
+      if (isShuffle) currentIndex = Math.floor(Math.random() * activePlayQueue.length);
+      else currentIndex = (currentIndex + 1) % activePlayQueue.length;
+      playTrack(currentIndex, currentPlaylistId ? 'playlist' : 'home');
+    }
+
+    function playPrevious() {
+      if (!activePlayQueue.length) return;
+      currentIndex = (currentIndex - 1 + activePlayQueue.length) % activePlayQueue.length;
+      playTrack(currentIndex, currentPlaylistId ? 'playlist' : 'home');
+    }
+
+    function toggleShuffle() {
+      isShuffle = !isShuffle;
+      document.getElementById('fs-shuffle-btn').classList.toggle('active', isShuffle);
+      showToast(isShuffle ? "🔀 Shuffle On" : "➡️ Normal");
+    }
+
+    function toggleRepeatMode() {
+      repeatMode = (repeatMode + 1) % 4;
+      const badge = document.getElementById('repeat-badge');
+      const btn = document.getElementById('fs-repeat-btn');
+      if (repeatMode === 0) { badge.innerText = "OFF"; btn.classList.remove('active'); }
+      else if (repeatMode === 1) { badge.innerText = "1x"; btn.classList.add('active'); }
+      else if (repeatMode === 2) { badge.innerText = "2x"; btn.classList.add('active'); }
+      else if (repeatMode === 3) { badge.innerText = "ALL"; btn.classList.add('active'); }
+    }
+
+    function skipTime(sec) {
+      const activeEl = fsVideoPlayer.style.display === 'block' ? fsVideoPlayer : audioPlayer;
+      activeEl.currentTime += sec;
+    }
+
+    function changeSpeed(val) {
+      audioPlayer.playbackRate = parseFloat(val);
+      fsVideoPlayer.playbackRate = parseFloat(val);
+    }
+
+    audioPlayer.addEventListener('timeupdate', updateProgress);
+    fsVideoPlayer.addEventListener('timeupdate', updateProgress);
+    audioPlayer.addEventListener('ended', handleEnded);
+    fsVideoPlayer.addEventListener('ended', handleEnded);
+
+    function handleEnded() {
+      const activeEl = fsVideoPlayer.style.display === 'block' ? fsVideoPlayer : audioPlayer;
+      if (repeatMode === 1 && currentTrackRepeatCount < 1) { currentTrackRepeatCount++; activeEl.currentTime = 0; activeEl.play(); return; }
+      if (repeatMode === 2 && currentTrackRepeatCount < 2) { currentTrackRepeatCount++; activeEl.currentTime = 0; activeEl.play(); return; }
+      currentTrackRepeatCount = 0; playNext();
+    }
+
+    function updateProgress() {
+      const activeEl = fsVideoPlayer.style.display === 'block' ? fsVideoPlayer : audioPlayer;
+      if (activeEl.duration) {
+        const pct = (activeEl.currentTime / activeEl.duration) * 100;
+        document.getElementById('dock-progress-fill').style.width = pct + '%';
+        document.getElementById('dock-progress-thumb').style.left = pct + '%';
+        document.getElementById('fs-progress-fill').style.width = pct + '%';
+        document.getElementById('fs-progress-thumb').style.left = pct + '%';
+        document.getElementById('fs-current-time').innerText = formatTime(activeEl.currentTime);
+        document.getElementById('fs-total-duration').innerText = formatTime(activeEl.duration);
+      }
+    }
+
+    function startSeek(e, type) {
+      e.preventDefault();
+      const container = e.currentTarget;
+      
+      function updatePos(clientX) {
+        const rect = container.getBoundingClientRect();
+        let pos = (clientX - rect.left) / rect.width;
+        pos = Math.max(0, Math.min(1, pos));
+        const activeEl = fsVideoPlayer.style.display === 'block' ? fsVideoPlayer : audioPlayer;
+        if (activeEl.duration) {
+          activeEl.currentTime = pos * activeEl.duration;
+        }
+      }
+
+      const onMouseMove = (ev) => updatePos(ev.clientX);
+      const onTouchMove = (ev) => updatePos(ev.touches[0].clientX);
+      
+      const onEnd = () => {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onEnd);
+        window.removeEventListener('touchmove', onTouchMove);
+        window.removeEventListener('touchend', onEnd);
+      };
+
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onEnd);
+      window.addEventListener('touchmove', onTouchMove);
+      window.addEventListener('touchend', onEnd);
+
+      if (e.clientX) updatePos(e.clientX);
+      else if (e.touches) updatePos(e.touches[0].clientX);
+    }
+
+    function startEQSeek(e, type) {
+      e.preventDefault();
+      const container = e.currentTarget;
+
+      function updateEQPos(clientX) {
+        const rect = container.getBoundingClientRect();
+        let pos = (clientX - rect.left) / rect.width;
+        pos = Math.max(0, Math.min(1, pos));
+        const val = (pos * 40) - 20;
+        eqValues[type] = val;
+        
+        document.getElementById(`eq-${type}-fill`).style.width = (pos * 100) + '%';
+        document.getElementById(`eq-${type}-thumb`).style.left = (pos * 100) + '%';
+        applyEQValues();
+      }
+
+      const onMouseMove = (ev) => updateEQPos(ev.clientX);
+      const onTouchMove = (ev) => updateEQPos(ev.touches[0].clientX);
+      
+      const onEnd = () => {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onEnd);
+        window.removeEventListener('touchmove', onTouchMove);
+        window.removeEventListener('touchend', onEnd);
+      };
+
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onEnd);
+      window.addEventListener('touchmove', onTouchMove);
+      window.addEventListener('touchend', onEnd);
+
+      if (e.clientX) updateEQPos(e.clientX);
+      else if (e.touches) updateEQPos(e.touches[0].clientX);
+    }
+
+    function applyEQValues() {
+      initWebAudioAPI();
+      if (!audioCtx) return;
+      if (bassNode) bassNode.gain.value = eqValues.bass;
+      if (midNode) midNode.gain.value = eqValues.mid;
+      if (trebleNode) trebleNode.gain.value = eqValues.treble;
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function openFullscreenPlayer() { document.getElementById('fullscreen-player').style.display = 'flex'; }
+    function closeFullscreenPlayer() { document.getElementById('fullscreen-player').style.display = 'none'; }
+
+    function filterTracks() {
+      const query = document.getElementById('search-input').value.toLowerCase();
+      renderTracks(getFilteredTracks().filter(t => t.name.toLowerCase().includes(query)));
+    }
+
+    function openCreatePlaylistModal() {
+      editingPlaylistId = null;
+      document.getElementById('modal-pl-title').innerText = "Create Playlist";
+      document.getElementById('modal-pl-submit-btn').innerText = "Create";
+      document.getElementById('pl-name-input').value = "";
+      document.getElementById('pl-dp-input').value = "";
+      document.getElementById('modal-create-playlist').style.display = 'flex';
+    }
+
+    function openRenamePlaylistModal(plId) {
+      editingPlaylistId = plId;
+      const pl = playlists.find(p => p.id === plId);
+      if (!pl) return;
+      document.getElementById('modal-pl-title').innerText = "Edit Playlist";
+      document.getElementById('modal-pl-submit-btn').innerText = "Update";
+      document.getElementById('pl-name-input').value = pl.name;
+      document.getElementById('pl-icon-input').value = pl.icon;
+      document.getElementById('modal-create-playlist').style.display = 'flex';
+    }
+
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    async function confirmCreatePlaylist() {
+      const name = document.getElementById('pl-name-input').value.trim();
+      const icon = document.getElementById('pl-icon-input').value.trim() || '🎧';
+      const dpInput = document.getElementById('pl-dp-input');
+      if (!name) return;
+      let dpBlob = dpInput.files && dpInput.files[0] ? dpInput.files[0] : null;
+
+      if (editingPlaylistId) {
+        const pl = playlists.find(p => p.id === editingPlaylistId);
+        if (pl) { pl.name = name; pl.icon = icon; if (dpBlob) pl.dpBlob = dpBlob; await savePlaylistToDB(pl); }
+      } else {
+        const newPl = { id: 'pl_' + Date.now(), name: name, icon: icon, dpBlob: dpBlob, trackIds: [], sortMode: 'manual' };
+        playlists.push(newPl);
+        await savePlaylistToDB(newPl);
+      }
+      renderPlaylists();
+      closeModal('modal-create-playlist');
+    }
+
+    function confirmDeletePlaylist(plId, plName) {
+      document.getElementById('delete-modal-title').innerText = "⚠️ Delete Playlist";
+      document.getElementById('delete-modal-text').innerText = `Delete "${plName}"?`;
+      deleteCallbackAction = async () => {
+        if (!db) return;
+        const tx = db.transaction("playlists", "readwrite");
+        tx.objectStore("playlists").delete(plId);
+        playlists = playlists.filter(p => p.id !== plId);
+        if (currentPlaylistId === plId) { currentPlaylistId = null; backToPlaylistsGrid(); }
+        renderPlaylists();
+        closeModal('modal-confirm-delete');
+        showToast("🗑️ Deleted!");
+      };
+      document.getElementById('confirm-delete-btn').onclick = deleteCallbackAction;
+      document.getElementById('modal-confirm-delete').style.display = 'flex';
+    }
+
+    function toggleMenuDropdown(menuId, event) {
+      event.stopPropagation();
+      const isOpen = document.getElementById(menuId).classList.contains('show');
+      document.querySelectorAll('.menu-dropdown').forEach(m => m.classList.remove('show'));
+      if (!isOpen) document.getElementById(menuId).classList.add('show');
+    }
+
+    window.addEventListener('click', () => {
+      document.querySelectorAll('.menu-dropdown').forEach(m => m.classList.remove('show'));
+    });
+
+    function renderPlaylists() {
+      const grid = document.getElementById('playlist-grid-container');
+      grid.innerHTML = '';
+      if (!playlists.length) {
+        grid.innerHTML = `<div style="color:var(--text-sub); grid-column: span 2; text-align:center;">No playlists yet.</div>`;
+        return;
+      }
+
+      playlists.forEach(pl => {
+        const card = document.createElement('div');
+        card.className = `playlist-card ${currentPlaylistId === pl.id ? 'active' : ''}`;
+        let dpStyle = pl.dpBlob ? `background-image: url('${URL.createObjectURL(pl.dpBlob)}');` : '';
+
+        card.innerHTML = `
+          <div class="playlist-dp" style="${dpStyle}">${pl.dpBlob ? '' : pl.icon}</div>
+          <div class="playlist-info-row">
+            <div>
+              <div class="playlist-name">${pl.name}</div>
+              <div class="playlist-count">${pl.trackIds.length} tracks</div>
+            </div>
+            <div class="menu-container">
+              <button class="action-btn" id="pl-menu-btn-${pl.id}" style="font-size:1.1rem; padding:2px 6px;" onclick="toggleMenuDropdown('pl-menu-${pl.id}', event)">⋮</button>
+              <div class="menu-dropdown" id="pl-menu-${pl.id}">
+                <div class="menu-item" onclick="openRenamePlaylistModal('${pl.id}')">Rename</div>
+                <div class="menu-item danger" onclick="confirmDeletePlaylist('${pl.id}', '${pl.name.replace(/'/g, "\\'")}')">Delete</div>
+              </div>
+            </div>
+          </div>
+        `;
+        card.onclick = () => selectPlaylist(pl.id);
+        grid.appendChild(card);
+      });
+    }
+
+    function selectPlaylist(id) {
+      currentPlaylistId = id;
+      const pl = playlists.find(p => p.id === id);
+      if (!pl) return;
+
+      document.getElementById('playlists-main-container').style.display = 'none';
+      document.getElementById('spotify-playlist-detail-view').style.display = 'block';
+
+      const avatarEl = document.getElementById('spotify-pl-avatar-icon');
+      if (pl.dpBlob) {
+        avatarEl.style.backgroundImage = `url('${URL.createObjectURL(pl.dpBlob)}')`;
+        avatarEl.innerText = '';
+      } else {
+        avatarEl.style.backgroundImage = 'none';
+        avatarEl.innerText = pl.icon;
+      }
+      document.getElementById('spotify-pl-name').innerText = pl.name;
+
+      const tracks = getPlaylistTracks(id);
+      document.getElementById('spotify-pl-track-count').innerText = `${tracks.length} tracks`;
+
+      const container = document.getElementById('spotify-playlist-tracks-container');
+      container.innerHTML = '';
+      if (!tracks.length) {
+        container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-sub);">No tracks in playlist.</div>`;
+        return;
+      }
+
+      tracks.forEach((track, idx) => {
+        const card = document.createElement('div');
+        const isActive = activePlayQueue[currentIndex]?.id === track.id && currentPlaylistId === pl.id;
+        card.className = `track-card ${isActive ? 'active' : ''}`;
+        let coverStyle = track.coverBlob ? `background-image: url('${URL.createObjectURL(track.coverBlob)}');` : '';
+
+        card.innerHTML = `
+          <div class="track-info-flex">
+            <div class="track-thumb" style="${coverStyle}">${track.coverBlob ? '' : (track.isVideo ? '🎬' : '🎵')}</div>
+            <div class="track-details">
+              <h4>${track.name}</h4>
+              <p>${track.type}</p>
+            </div>
+          </div>
+          <button class="action-btn" id="rem-pl-track-${track.id}" title="Remove">❌</button>
+        `;
+        card.querySelector('.track-info-flex').onclick = () => {
+          activePlayQueue = tracks;
+          playTrack(idx, 'playlist');
+        };
+        card.querySelector(`#rem-pl-track-${track.id}`).onclick = (e) => {
+          e.stopPropagation();
+          confirmRemoveFromPlaylist(pl.id, track.id, track.name);
+        };
+        container.appendChild(card);
+      });
+    }
+
+    function backToPlaylistsGrid() {
+      currentPlaylistId = null;
+      document.getElementById('spotify-playlist-detail-view').style.display = 'none';
+      document.getElementById('playlists-main-container').style.display = 'block';
+      renderPlaylists();
+    }
+
+    function playCurrentPlaylist() {
+      const tracks = getPlaylistTracks(currentPlaylistId);
+      if (tracks.length > 0) {
+        activePlayQueue = tracks;
+        playTrack(0, 'playlist');
+      } else showToast("⚠️ Playlist empty!");
+    }
+
+    function shuffleCurrentPlaylist() {
+      isShuffle = true;
+      document.getElementById('fs-shuffle-btn').classList.add('active');
+      const tracks = getPlaylistTracks(currentPlaylistId);
+      if (tracks.length > 0) {
+        activePlayQueue = tracks;
+        playTrack(Math.floor(Math.random() * tracks.length), 'playlist');
+        showToast("🔀 Shuffled!");
+      }
+    }
+
+    function promptSortPlaylist(mode) {
+      const pl = playlists.find(p => p.id === currentPlaylistId);
+      if (!pl) return;
+      pl.sortMode = mode;
+      savePlaylistToDB(pl);
+      selectPlaylist(currentPlaylistId);
+      showToast(`Sorted by: ${mode}`);
+    }
+
+    function getPlaylistTracks(plId) {
+      const pl = playlists.find(p => p.id === plId);
+      if (!pl) return [];
+      let tracks = mediaList.filter(t => pl.trackIds.includes(t.id));
+      const mode = pl.sortMode || 'manual';
+      if (mode === 'auto') tracks = [...tracks].sort(() => Math.random() - 0.5);
+      else if (mode === 'name_asc') tracks.sort((a, b) => a.name.localeCompare(b.name));
+      else if (mode === 'name_desc') tracks.sort((a, b) => b.name.localeCompare(a.name));
+      else if (mode === 'date_up') tracks.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+      else if (mode === 'date_down') tracks.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      return tracks;
+    }
+
+    function openPlaylistAddSongsModal() {
+      document.getElementById('modal-search-songs').value = '';
+      renderModalSongsList(mediaList);
+      document.getElementById('modal-playlist-add-songs').style.display = 'flex';
+    }
+
+    function filterModalSongs(query) {
+      renderModalSongsList(mediaList.filter(t => t.name.toLowerCase().includes(query.toLowerCase())));
+    }
+
+    function renderModalSongsList(list) {
+      const container = document.getElementById('modal-songs-selection-list');
+      container.innerHTML = '';
+      const pl = playlists.find(p => p.id === currentPlaylistId);
+      if (!pl) return;
+
+      list.forEach(track => {
+        const isAdded = pl.trackIds.includes(track.id);
+        const card = document.createElement('div');
+        card.className = 'track-card';
+        card.innerHTML = `
+          <div class="track-info-flex">
+            <div class="track-thumb">${track.isVideo ? '🎬' : '🎵'}</div>
+            <div class="track-details"><h4>${track.name}</h4><p>${track.type}</p></div>
+          </div>
+          <button class="modal-btn ${isAdded ? 'secondary' : 'primary'}" style="font-size:0.7rem; padding:4px 8px;">${isAdded ? 'Added ✓' : '+ Add'}</button>
+        `;
+        card.onclick = async () => {
+          if (!pl.trackIds.includes(track.id)) {
+            pl.trackIds.push(track.id);
+            await savePlaylistToDB(pl);
+            selectPlaylist(currentPlaylistId);
+            renderModalSongsList(list);
+            showToast("✅ Added!");
+          }
+        };
+        container.appendChild(card);
+      });
+    }
+
+    function confirmRemoveFromPlaylist(plId, trackId, trackName) {
+      document.getElementById('delete-modal-title').innerText = "⚠️ Remove";
+      document.getElementById('delete-modal-text').innerText = `Remove "${trackName}"?`;
+      deleteCallbackAction = async () => {
+        const pl = playlists.find(p => p.id === plId);
+        if (pl) {
+          pl.trackIds = pl.trackIds.filter(id => id !== trackId);
+          await savePlaylistToDB(pl);
+          selectPlaylist(plId);
+        }
+        closeModal('modal-confirm-delete');
+        showToast("❌ Removed!");
+      };
+      document.getElementById('confirm-delete-btn').onclick = deleteCallbackAction;
+      document.getElementById('modal-confirm-delete').style.display = 'flex';
+    }
+  </script>
+</body>
+</html>
