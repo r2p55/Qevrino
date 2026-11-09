@@ -5,7 +5,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Qevrino - Premium Media Hub</title>
-  <!-- JSZip Library for Full Backup & Restore -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     :root {
@@ -377,7 +376,6 @@
   <input type="file" id="mp3-file-input" multiple accept="audio/*,.mp3">
   <input type="file" id="mp4-file-input" multiple accept="video/mp4,.mp4">
   <input type="file" id="import-zip-input" accept=".zip">
-  <!-- Whole folder select support -->
   <input type="file" id="import-folder-input" webkitdirectory directory multiple>
 
   <div id="toast-msg" class="status-toast"></div>
@@ -393,8 +391,8 @@
         <div class="menu-dropdown" id="global-settings-menu" style="right:0;">
           <div class="menu-item" onclick="openThemePicker()">🎨 Accent Color</div>
           <div class="menu-item" onclick="openPreferredStorageModal()">📁 Preferred Storage</div>
-          <div class="menu-item" onclick="openBackupSelectionModal('backup')">💾 Backup Folder (ZIP)</div>
-          <div class="menu-item" onclick="document.getElementById('import-folder-input').click()">📂 Add Folder (Bulk)</div>
+          <div class="menu-item" onclick="openBackupSelectionModal()">📦 Bulk Backup (Folder)</div>
+          <div class="menu-item" onclick="document.getElementById('import-folder-input').click()">📂 Restore Folder (Bulk)</div>
           <div class="menu-item" onclick="document.getElementById('import-zip-input').click()">📂 Restore Backup (ZIP)</div>
         </div>
       </div>
@@ -654,12 +652,12 @@
     </div>
   </div>
 
-  <!-- Backup & Folder Export Selector Modal -->
+  <!-- Bulk Backup Modal -->
   <div class="modal-overlay" id="modal-backup-selector">
     <div class="modal-card" style="max-height: 85vh;">
-      <h3 id="backup-modal-title" style="font-size: 1rem;">💾 Folder Backup (ZIP)</h3>
+      <h3 style="font-size: 1rem;">📦 Bulk Folder Backup</h3>
       <label>Backup Folder Name</label>
-      <input type="text" id="backup-folder-name-input" value="Qevrino_Music_Backup" placeholder="Folder name...">
+      <input type="text" id="backup-folder-name-input" value="Qevrino_Bulk_Backup" placeholder="Folder name...">
       <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; margin: 4px 0;">
         <span id="backup-selected-count">0 selected</span>
         <div style="display: flex; gap: 6px;">
@@ -670,7 +668,7 @@
       <div id="backup-songs-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 6px;"></div>
       <div class="modal-btns" style="margin-top: 10px;">
         <button class="modal-btn secondary" onclick="closeModal('modal-backup-selector')">Cancel</button>
-        <button class="modal-btn primary" onclick="executeFolderBackupExport()">Download Folder ZIP</button>
+        <button class="modal-btn primary" onclick="executeBulkFolderBackup()">Export Bulk Folder</button>
       </div>
     </div>
   </div>
@@ -759,7 +757,7 @@
     let currentStoragePath = localStorage.getItem('qevrino_storage_path') || '/Internal Storage/QevrinoDownloads';
     let customFolders = JSON.parse(localStorage.getItem('qevrino_custom_folders') || '["Download", "Music", "QevrinoMedia", "BackupData"]');
 
-    const request = indexedDB.open("QevrinoLocalDB", 25);
+    const request = indexedDB.open("QevrinoLocalDB", 26);
 
     request.onupgradeneeded = (e) => {
       db = e.target.result;
@@ -919,15 +917,15 @@
       e.target.value = '';
     });
 
-    // Whole folder bulk import handler
+    // Bulk Folder Restore handler
     document.getElementById('import-folder-input').addEventListener('change', async (e) => {
       const files = Array.from(e.target.files || []);
       if (!files.length) return;
       showToast(`⏳ Scanning folder (${files.length} files)...`);
       let added = 0;
       for (let file of files) {
-        if (file.type.includes('audio') || file.type.includes('video') || file.name.endsWith('.mp3') || file.name.endsWith('.mp4') || file.name.endsWith('.m4a') || file.name.endsWith('.WAV')) {
-          const isVideo = file.name.endsWith('.mp4');
+        if (file.type.includes('audio') || file.type.includes('video') || file.name.endsWith('.mp3') || file.name.endsWith('.mp4') || file.name.endsWith('.m4a') || file.name.endsWith('.WAV') || file.name.endsWith('.MP3') || file.name.endsWith('.MP4')) {
+          const isVideo = file.name.endsWith('.mp4') || file.name.endsWith('.MP4');
           const id = 'track_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
           const mediaData = {
             id: id,
@@ -947,7 +945,7 @@
         }
       }
       renderTracks(getFilteredTracks());
-      showToast(`✅ Successfully imported ${added} media tracks from folder!`);
+      showToast(`✅ Successfully bulk restored ${added} tracks!`);
       e.target.value = '';
     });
 
@@ -1306,7 +1304,7 @@
       showToast(`✅ Folder created & selected!`);
     }
 
-    function openBackupSelectionModal(mode) {
+    function openBackupSelectionModal() {
       renderBackupSongsList();
       document.getElementById('modal-backup-selector').style.display = 'flex';
     }
@@ -1358,8 +1356,8 @@
       document.getElementById('backup-selected-count').innerText = `${selectedCount} of ${mediaList.length} selected`;
     }
 
-    // Folder Backup Export Function (Saves files inside a single folder name inside ZIP)
-    async function executeFolderBackupExport() {
+    // Modern Direct Bulk Folder Download (No ZIP required for backup export)
+    async function executeBulkFolderBackup() {
       const checkedBoxes = document.querySelectorAll('.backup-track-checkbox:checked');
       const selectedIds = Array.from(checkedBoxes).map(chk => chk.getAttribute('data-id'));
       
@@ -1368,78 +1366,80 @@
         return;
       }
 
-      let folderNameInput = document.getElementById('backup-folder-name-input').value.trim() || "Qevrino_Backup_Folder";
+      let folderNameInput = document.getElementById('backup-folder-name-input').value.trim() || "Qevrino_Bulk_Backup";
       const selectedTracks = mediaList.filter(t => selectedIds.includes(t.id));
-      showToast(`⏳ Packaging folder "${folderNameInput}" (${selectedTracks.length} tracks)...`);
-
-      const zip = new JSZip();
-      const folder = zip.folder(folderNameInput);
       
-      const backupMeta = {
-        playlists: playlists,
-        storagePath: currentStoragePath,
-        version: "2.5"
-      };
-      folder.file("qevrino_metadata.json", JSON.stringify(backupMeta, null, 2));
-
-      for (let track of selectedTracks) {
-        if (track.blob) {
-          let ext = track.isVideo ? '.mp4' : '.mp3';
-          let safeName = track.name.replace(/[^a-zA-Z0-9_\u0980-\u09FF\s-]/g, '_');
-          if (!safeName.endsWith('.mp3') && !safeName.endsWith('.mp4')) {
-            safeName += ext;
+      // If browser supports File System Access API, directly write to folder
+      if (window.showDirectoryPicker) {
+        try {
+          showToast("📁 Please select your destination folder...");
+          const dirHandle = await window.showDirectoryPicker();
+          const subDirHandle = await dirHandle.getDirectoryHandle(folderNameInput, { create: true });
+          
+          showToast(`⏳ Exporting ${selectedTracks.length} tracks to folder...`);
+          
+          for (let track of selectedTracks) {
+            if (track.blob) {
+              let ext = track.isVideo ? '.mp4' : '.mp3';
+              let safeName = track.name.replace(/[^a-zA-Z0-9_\u0980-\u09FF\s-]/g, '_');
+              if (!safeName.endsWith('.mp3') && !safeName.endsWith('.mp4')) {
+                safeName += ext;
+              }
+              const fileHandle = await subDirHandle.getFileHandle(safeName, { create: true });
+              const writable = await fileHandle.createWritable();
+              await writable.write(track.blob);
+              await writable.close();
+            }
           }
-          folder.file(safeName, track.blob);
+          
+          closeModal('modal-backup-selector');
+          showToast("✅ Bulk folder backup completed successfully!");
+          return;
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            console.log("Fallback to individual downloads due to API limitation");
+          } else {
+            return;
+          }
         }
       }
 
-      try {
-        const content = await zip.generateAsync({ type: "blob" });
-        const url = URL.createObjectURL(content);
-        const dl = document.createElement('a');
-        dl.href = url;
-        dl.download = `${folderNameInput}.zip`;
-        dl.style.display = 'none';
+      // Fallback: Bulk automatic multi-file download simulation
+      showToast(`⏳ Downloading ${selectedTracks.length} files in bulk...`);
+      for (let i = 0; i < selectedTracks.length; i++) {
+        let track = selectedTracks[i];
+        if (track.blob) {
+          let ext = track.isVideo ? '.mp4' : '.mp3';
+          let safeName = track.name.replace(/[^a-zA-Z0-9_\u0980-\u09FF\s-]/g, '_');
+          if (!safeName.endsWith('.mp3') && !safeName.endsWith('.mp4')) safeName += ext;
 
-        document.body.appendChild(dl);
-        dl.click();
-        document.body.removeChild(dl);
-        
-        setTimeout(() => URL.revokeObjectURL(url), 1500);
-        closeModal('modal-backup-selector');
-        showToast(`✅ Folder backup downloaded successfully!`);
-      } catch (err) {
-        console.error(err);
-        showToast("⚠️ Failed to create folder ZIP backup.");
+          const url = URL.createObjectURL(track.blob);
+          const dl = document.createElement('a');
+          dl.href = url;
+          dl.download = safeName;
+          dl.style.display = 'none';
+          document.body.appendChild(dl);
+          dl.click();
+          document.body.removeChild(dl);
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          await new Promise(r => setTimeout(r, 250)); // small stagger for browser safety
+        }
       }
+
+      closeModal('modal-backup-selector');
+      showToast("✅ Bulk files downloaded successfully!");
     }
 
-    // Smart Whole-Folder Restore supporting any folder ZIP structure
+    // Restore ZIP backup fallback
     document.getElementById('import-zip-input').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-
-      showToast("⏳ Restoring folder backup...");
-      
+      showToast("⏳ Restoring backup ZIP...");
       try {
         const zip = new JSZip();
         const contents = await zip.loadAsync(file);
         let trackCount = 0;
 
-        // Check if metadata exists anywhere in the zip
-        for (let filename of Object.keys(contents.files)) {
-          if (filename.endsWith('qevrino_metadata.json')) {
-            const metaStr = await contents.files[filename].async("text");
-            const metaData = JSON.parse(metaStr);
-            if (metaData.playlists) {
-              for (let pl of metaData.playlists) {
-                await savePlaylistToDB(pl);
-              }
-            }
-          }
-        }
-
-        // Extract all audio and video files regardless of folder nesting hierarchy
         for (let filename of Object.keys(contents.files)) {
           const zipEntry = contents.files[filename];
           if (zipEntry.dir || filename.includes("qevrino_metadata.json")) continue;
@@ -1470,13 +1470,8 @@
         }
 
         loadStoredData();
-        if (trackCount > 0) {
-          showToast(`✅ Successfully restored ${trackCount} tracks from folder!`);
-        } else {
-          showToast("⚠️ No media tracks found in ZIP folder!");
-        }
+        showToast(`✅ Successfully restored ${trackCount} tracks!`);
       } catch (err) {
-        console.error(err);
         showToast("⚠️ Invalid or corrupted backup ZIP!");
       }
       e.target.value = '';
@@ -1931,9 +1926,9 @@
         closeModal('modal-confirm-delete');
         showToast("❌ Removed!");
       };
-      document.getElementById('confirm-delete-btn').onclick = deleteCallbackAction;
+      document.getElementById('confirm-btn').onclick = deleteCallbackAction;
       document.getElementById('modal-confirm-delete').style.display = 'flex';
     }
   </script>
 </body>
-    </html>
+  </html>
