@@ -5,13 +5,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Qevrino - Premium Media Hub</title>
+  <!-- JSZip Library for Full Backup & Restore -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     :root {
       --bg-dark: #090a0f;
       --card-bg: rgba(255, 255, 255, 0.05);
       --card-hover: rgba(255, 255, 255, 0.09);
-      --accent-green: #1ed760;
-      --accent-glow: rgba(30, 215, 96, 0.35);
+      --accent-red: #ff3333; /* রেড নিয়ন হাইলাইট কালার */
+      --accent-glow: rgba(255, 51, 51, 0.35); /* রেড নিয়ন গ্লো */
       --text-main: #ffffff;
       --text-sub: #a0a5aa;
       --border: rgba(255, 255, 255, 0.08);
@@ -34,6 +36,8 @@
       flex-direction: column;
       overflow: hidden;
       user-select: none;
+      overscroll-behavior-y: none; /* পুল-টু-রিফ্রেশ পুরোপুরি বন্ধ রাখতে */
+      touch-action: pan-x pan-y;
     }
 
     header {
@@ -50,13 +54,13 @@
     }
 
     .header-logo { font-size: 1.2rem; font-weight: 800; letter-spacing: 1px; }
-    .header-logo span { color: var(--accent-green); }
+    .header-logo span { color: var(--accent-red); text-shadow: 0 0 10px var(--accent-glow); }
 
     .header-actions { display: flex; gap: 6px; align-items: center; position: relative; }
 
     .btn-upload-header {
-      background: var(--accent-green);
-      color: #000;
+      background: var(--accent-red);
+      color: #fff;
       border: none;
       padding: 5px 10px;
       border-radius: 20px;
@@ -71,6 +75,7 @@
       overflow-y: auto;
       padding: 14px;
       padding-bottom: 150px;
+      overscroll-behavior-y: contain;
     }
 
     .view-section { display: none; }
@@ -87,7 +92,7 @@
       font-size: 0.88rem;
       outline: none;
     }
-    .search-box input:focus { border-color: var(--accent-green); }
+    .search-box input:focus { border-color: var(--accent-red); }
 
     .upload-grid {
       display: grid;
@@ -97,8 +102,8 @@
     }
 
     .upload-card {
-      background: linear-gradient(135deg, rgba(30, 215, 96, 0.12) 0%, rgba(255, 255, 255, 0.02) 100%);
-      border: 1px dashed rgba(30, 215, 96, 0.4);
+      background: linear-gradient(135deg, rgba(255, 51, 51, 0.12) 0%, rgba(255, 255, 255, 0.02) 100%);
+      border: 1px dashed rgba(255, 51, 51, 0.4);
       border-radius: 14px;
       padding: 12px 10px;
       text-align: center;
@@ -130,7 +135,7 @@
       transition: background 0.2s;
     }
     .track-card:hover { background: var(--card-hover); }
-    .track-card.active { border-color: var(--accent-green); background: rgba(30, 215, 96, 0.08); }
+    .track-card.active { border-color: var(--accent-red); background: rgba(255, 51, 51, 0.08); }
 
     .track-info-flex { display: flex; align-items: center; gap: 12px; overflow: hidden; flex: 1; }
     .track-thumb {
@@ -155,7 +160,7 @@
       background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 12px;
       display: flex; flex-direction: column; gap: 8px; cursor: pointer; position: relative;
     }
-    .playlist-card.active { border-color: var(--accent-green); }
+    .playlist-card.active { border-color: var(--accent-red); }
     .playlist-dp {
       width: 100%; height: 90px; border-radius: 10px; background: rgba(255,255,255,0.08);
       display: flex; align-items: center; justify-content: center; font-size: 2rem;
@@ -180,15 +185,15 @@
     .menu-item.danger { color: #ff4d4d; }
 
     .create-playlist-btn {
-      background: rgba(30, 215, 96, 0.15); border: 1px dashed var(--accent-green);
-      color: var(--accent-green); border-radius: 14px; padding: 12px;
+      background: rgba(255, 51, 51, 0.15); border: 1px dashed var(--accent-red);
+      color: var(--accent-red); border-radius: 14px; padding: 12px;
       font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
     }
 
     .big-add-songs-btn {
-      background: linear-gradient(135deg, rgba(30,215,96,0.2) 0%, rgba(30,215,96,0.05) 100%);
-      border: 2px dashed var(--accent-green);
-      color: var(--accent-green);
+      background: linear-gradient(135deg, rgba(255,51,51,0.2) 0%, rgba(255,51,51,0.05) 100%);
+      border: 2px dashed var(--accent-red);
+      color: var(--accent-red);
       border-radius: 14px;
       padding: 12px;
       font-weight: 700;
@@ -202,7 +207,7 @@
     }
 
     .spotify-playlist-header {
-      background: linear-gradient(180deg, rgba(30,215,96,0.22) 0%, rgba(9,10,15,0.95) 100%);
+      background: linear-gradient(180deg, rgba(255,51,51,0.22) 0%, rgba(9,10,15,0.95) 100%);
       padding: 16px;
       border-radius: 16px;
       margin-bottom: 14px;
@@ -241,10 +246,10 @@
       width: 100%; height: 6px; background: rgba(255, 255, 255, 0.18); border-radius: 3px; position: relative; overflow: visible;
     }
     .range-fill {
-      height: 100%; width: 0%; background: var(--accent-green); border-radius: 3px; position: absolute; top: 0; left: 0; pointer-events: none;
+      height: 100%; width: 0%; background: var(--accent-red); border-radius: 3px; position: absolute; top: 0; left: 0; pointer-events: none;
     }
     .range-thumb {
-      width: 16px; height: 16px; background: #ffffff; border: 2px solid var(--accent-green);
+      width: 16px; height: 16px; background: #ffffff; border: 2px solid var(--accent-red);
       border-radius: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%);
       left: 0%; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.6);
     }
@@ -256,7 +261,7 @@
 
     .pro-controls { display: flex; align-items: center; gap: 12px; }
     .ctrl-btn { background: none; border: none; color: var(--text-main); font-size: 1.1rem; cursor: pointer; transition: color 0.2s, transform 0.1s; }
-    .ctrl-btn.active { color: var(--accent-green); filter: drop-shadow(0 0 6px var(--accent-green)); }
+    .ctrl-btn.active { color: var(--accent-red); filter: drop-shadow(0 0 6px var(--accent-red)); }
     .ctrl-btn:active { transform: scale(0.9); }
 
     .skip-badge-btn {
@@ -273,14 +278,14 @@
       cursor: pointer;
     }
     .skip-badge-btn.timer-active {
-      background: rgba(30, 215, 96, 0.2);
-      border-color: var(--accent-green);
-      color: var(--accent-green);
+      background: rgba(255, 51, 51, 0.2);
+      border-color: var(--accent-red);
+      color: var(--accent-red);
     }
 
     .master-play-btn {
-      background: var(--accent-green); border: none; width: 40px; height: 40px;
-      border-radius: 50%; color: #000; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer;
+      background: var(--accent-red); border: none; width: 40px; height: 40px;
+      border-radius: 50%; color: #fff; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer;
       box-shadow: 0 4px 15px var(--accent-glow);
     }
 
@@ -318,7 +323,7 @@
 
     .status-toast {
       position: fixed; top: 55px; left: 50%; transform: translateX(-50%);
-      background: var(--accent-green); color: #000; font-weight: 700; font-size: 0.75rem;
+      background: var(--accent-red); color: #fff; font-weight: 700; font-size: 0.75rem;
       padding: 6px 14px; border-radius: 20px; box-shadow: 0 4px 15px var(--accent-glow);
       display: none; z-index: 4000; animation: fadeInOut 2s ease;
     }
@@ -340,7 +345,7 @@
       display: flex; flex-direction: column; align-items: center; gap: 2px;
       color: var(--text-sub); font-size: 0.68rem; cursor: pointer; border: none; background: none;
     }
-    .nav-item.active { color: var(--accent-green); font-weight: 700; }
+    .nav-item.active { color: var(--accent-red); font-weight: 700; }
     .nav-item svg { width: 16px; height: 16px; fill: currentColor; }
 
     .modal-overlay {
@@ -360,18 +365,18 @@
     .modal-card input[type="file"] { font-size: 0.75rem; color: var(--text-sub); }
     .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
     .modal-btn { padding: 6px 12px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.78rem; }
-    .modal-btn.primary { background: var(--accent-green); color: #000; }
+    .modal-btn.primary { background: var(--accent-red); color: #fff; }
     .modal-btn.secondary { background: rgba(255,255,255,0.1); color: #fff; }
     .modal-btn.danger { background: #ff4d4d; color: #fff; }
 
-    #mp3-file-input, #mp4-file-input, #import-json-input { display: none; }
+    #mp3-file-input, #mp4-file-input, #import-zip-input { display: none; }
   </style>
 </head>
 <body>
   <audio id="main-audio-player" crossorigin="anonymous"></audio>
   <input type="file" id="mp3-file-input" multiple accept="audio/*,.mp3">
   <input type="file" id="mp4-file-input" multiple accept="video/mp4,.mp4">
-  <input type="file" id="import-json-input" accept=".json" onchange="importAppData(event)">
+  <input type="file" id="import-zip-input" accept=".zip">
 
   <div id="toast-msg" class="status-toast"></div>
 
@@ -386,9 +391,9 @@
         <div class="menu-dropdown" id="global-settings-menu" style="right:0;">
           <div class="menu-item" onclick="openThemePicker()">🎨 Accent Color</div>
           <div class="menu-item" onclick="openPreferredStorageModal()">📁 Preferred Storage</div>
-          <div class="menu-item" onclick="openBackupSelectionModal('backup')">💾 Backup Data</div>
+          <div class="menu-item" onclick="openBackupSelectionModal('backup')">💾 Backup Data (ZIP)</div>
           <div class="menu-item" onclick="openBackupSelectionModal('save_as')">📥 Save As (Selected)</div>
-          <div class="menu-item" onclick="document.getElementById('import-json-input').click()">📂 Restore Backup</div>
+          <div class="menu-item" onclick="document.getElementById('import-zip-input').click()">📂 Restore Backup (ZIP)</div>
         </div>
       </div>
     </div>
@@ -419,8 +424,8 @@
           <h4 style="font-size: 0.75rem; color: #ff4d4d;">❤️ Fav</h4>
           <p style="font-size: 0.62rem;">Favorites</p>
         </div>
-        <div class="upload-card" style="padding: 8px 4px; background: rgba(30,215,96,0.1); border-color: rgba(30,215,96,0.3);" onclick="switchSmartFilter('most_played')">
-          <h4 style="font-size: 0.75rem; color: var(--accent-green);">🔥 Recent</h4>
+        <div class="upload-card" style="padding: 8px 4px; background: rgba(255,51,51,0.1); border-color: rgba(255,51,51,0.3);" onclick="switchSmartFilter('most_played')">
+          <h4 style="font-size: 0.75rem; color: var(--accent-red);">🔥 Recent</h4>
           <p style="font-size: 0.62rem;">Most Played</p>
         </div>
         <div class="upload-card" style="padding: 8px 4px;" onclick="switchSmartFilter('all')">
@@ -493,7 +498,7 @@
 
   <!-- Floating Player Dock -->
   <div class="player-dock" id="player-dock">
-    <div class="range-slider-container" id="dock-progress-container" onmousedown="startSeek(event, 'dock')" ontouchstart="startSeek(event, 'dock')">
+    <div class="range-slider-container" id="dock-progress-container">
       <div class="range-track">
         <div class="range-fill" id="dock-progress-fill"></div>
         <div class="range-thumb" id="dock-progress-thumb"></div>
@@ -545,20 +550,30 @@
     </div>
 
     <div class="pro-panel-box" id="eq-panel">
-      <span style="font-size: 0.72rem; font-weight: 700; color: var(--accent-green);">Sound Equalizer</span>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+        <span style="font-size: 0.72rem; font-weight: 700; color: var(--accent-red);">Sound Equalizer & Presets</span>
+      </div>
+      <!-- EQ Presets Buttons -->
+      <div style="display: flex; gap: 4px; margin-bottom: 6px; flex-wrap: wrap;">
+        <button class="modal-btn secondary" style="font-size: 0.6rem; padding: 2px 6px;" onclick="applyEQPreset('normal')">Flat</button>
+        <button class="modal-btn secondary" style="font-size: 0.6rem; padding: 2px 6px;" onclick="applyEQPreset('bass')">Bass+</button>
+        <button class="modal-btn secondary" style="font-size: 0.6rem; padding: 2px 6px;" onclick="applyEQPreset('pop')">Pop</button>
+        <button class="modal-btn secondary" style="font-size: 0.6rem; padding: 2px 6px;" onclick="applyEQPreset('rock')">Rock</button>
+        <button class="modal-btn secondary" style="font-size: 0.6rem; padding: 2px 6px;" onclick="applyEQPreset('classical')">Classic</button>
+      </div>
       <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.7rem;">
         <div>Bass:
-          <div class="range-slider-container" onmousedown="startEQSeek(event, 'bass')" ontouchstart="startEQSeek(event, 'bass')">
+          <div class="range-slider-container" id="eq-bass-container">
             <div class="range-track"><div class="range-fill" id="eq-bass-fill" style="width:50%;"></div><div class="range-thumb" id="eq-bass-thumb" style="left:50%;"></div></div>
           </div>
         </div>
         <div>Mid:
-          <div class="range-slider-container" onmousedown="startEQSeek(event, 'mid')" ontouchstart="startEQSeek(event, 'mid')">
+          <div class="range-slider-container" id="eq-mid-container">
             <div class="range-track"><div class="range-fill" id="eq-mid-fill" style="width:50%;"></div><div class="range-thumb" id="eq-mid-thumb" style="left:50%;"></div></div>
           </div>
         </div>
         <div>Treble:
-          <div class="range-slider-container" onmousedown="startEQSeek(event, 'treble')" ontouchstart="startEQSeek(event, 'treble')">
+          <div class="range-slider-container" id="eq-treble-container">
             <div class="range-track"><div class="range-fill" id="eq-treble-fill" style="width:50%;"></div><div class="range-thumb" id="eq-treble-thumb" style="left:50%;"></div></div>
           </div>
         </div>
@@ -566,12 +581,12 @@
     </div>
 
     <div class="pro-panel-box" id="lyrics-panel">
-      <span style="font-size: 0.72rem; font-weight: 700; color: var(--accent-green);">Live Lyrics / Notes</span>
+      <span style="font-size: 0.72rem; font-weight: 700; color: var(--accent-red);">Live Lyrics / Notes</span>
       <textarea id="fs-lyrics-textarea" placeholder="Type lyrics here..." oninput="saveCurrentTrackLyrics(this.value)"></textarea>
     </div>
 
     <div class="pro-panel-box" id="timer-panel">
-      <span style="font-size: 0.72rem; font-weight: 700; color: var(--accent-green);" id="timer-status-title">Sleep Timer (Off)</span>
+      <span style="font-size: 0.72rem; font-weight: 700; color: var(--accent-red);" id="timer-status-title">Sleep Timer (Off)</span>
       <div style="display: flex; gap: 6px; justify-content: space-between;">
         <button class="modal-btn secondary" style="font-size: 0.68rem; padding: 3px 6px;" onclick="setSleepTimer(15)">15m</button>
         <button class="modal-btn secondary" style="font-size: 0.68rem; padding: 3px 6px;" onclick="setSleepTimer(30)">30m</button>
@@ -581,7 +596,7 @@
     </div>
 
     <div class="fs-controls-container">
-      <div class="range-slider-container" id="fs-progress-container" onmousedown="startSeek(event, 'fs')" ontouchstart="startSeek(event, 'fs')">
+      <div class="range-slider-container" id="fs-progress-container">
         <div class="range-track" style="height: 7px;">
           <div class="range-fill" id="fs-progress-fill"></div>
           <div class="range-thumb" id="fs-progress-thumb" style="width: 16px; height: 16px;"></div>
@@ -626,7 +641,7 @@
   <div class="modal-overlay" id="modal-preferred-storage">
     <div class="modal-card" style="max-height: 80vh;">
       <h3 style="font-size: 1rem;">📁 Preferred Storage</h3>
-      <p style="font-size: 0.72rem; color: var(--text-sub);">Current Path: <span id="current-storage-path" style="color:var(--accent-green);">/Internal Storage/QevrinoDownloads</span></p>
+      <p style="font-size: 0.72rem; color: var(--text-sub);">Current Path: <span id="current-storage-path" style="color:var(--accent-red);">/Internal Storage/QevrinoDownloads</span></p>
       <div style="display: flex; gap: 6px; margin-top: 4px;">
         <input type="text" id="new-folder-name" placeholder="Create new folder..." style="flex:1;">
         <button class="modal-btn primary" onclick="createNewStorageFolder()">Create</button>
@@ -641,7 +656,7 @@
   <!-- Backup & Save As Song Selector Modal -->
   <div class="modal-overlay" id="modal-backup-selector">
     <div class="modal-card" style="max-height: 85vh;">
-      <h3 id="backup-modal-title" style="font-size: 1rem;">💾 Select Songs for Download</h3>
+      <h3 id="backup-modal-title" style="font-size: 1rem;">💾 Select Songs for Backup (ZIP)</h3>
       <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; margin: 4px 0;">
         <span id="backup-selected-count">0 selected</span>
         <div style="display: flex; gap: 6px;">
@@ -652,7 +667,7 @@
       <div id="backup-songs-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 6px;"></div>
       <div class="modal-btns" style="margin-top: 10px;">
         <button class="modal-btn secondary" onclick="closeModal('modal-backup-selector')">Cancel</button>
-        <button class="modal-btn primary" onclick="executeBackupExport()">Confirm & Save</button>
+        <button class="modal-btn primary" onclick="executeBackupExport()">Confirm & Download ZIP</button>
       </div>
     </div>
   </div>
@@ -686,10 +701,10 @@
     <div class="modal-card">
       <h3 style="font-size: 1rem;">🎨 Choose Accent Color</h3>
       <div style="display: flex; gap: 10px; justify-content: space-around; padding: 8px 0;">
-        <div onclick="setAccentTheme('#1ed760', 'rgba(30, 215, 96, 0.35)')" style="width:32px; height:32px; border-radius:50%; background:#1ed760; cursor:pointer;"></div>
-        <div onclick="setAccentTheme('#3b82f6', 'rgba(59, 130, 246, 0.35)')" style="width:32px; height:32px; border-radius:50%; background:#3b82f6; cursor:pointer;"></div>
-        <div onclick="setAccentTheme('#a855f7', 'rgba(168, 85, 247, 0.35)')" style="width:32px; height:32px; border-radius:50%; background:#a855f7; cursor:pointer;"></div>
-        <div onclick="setAccentTheme('#f97316', 'rgba(249, 115, 22, 0.35)')" style="width:32px; height:32px; border-radius:50%; background:#f97316; cursor:pointer;"></div>
+        <div onclick="setAccentTheme('#ff3333', 'rgba(255, 51, 51, 0.35)')" style="width:32px; height:32px; border-radius:50%; background:#ff3333; cursor:pointer;"></div>
+        <div onclick="setAccentTheme('#ff4d4d', 'rgba(255, 77, 77, 0.35)')" style="width:32px; height:32px; border-radius:50%; background:#ff4d4d; cursor:pointer;"></div>
+        <div onclick="setAccentTheme('#e60000', 'rgba(230, 0, 0, 0.35)')" style="width:32px; height:32px; border-radius:50%; background:#e60000; cursor:pointer;"></div>
+        <div onclick="setAccentTheme('#ff6666', 'rgba(255, 102, 102, 0.35)')" style="width:32px; height:32px; border-radius:50%; background:#ff6666; cursor:pointer;"></div>
       </div>
       <div class="modal-btns">
         <button class="modal-btn secondary" onclick="closeModal('modal-theme-picker')">Close</button>
@@ -740,9 +755,8 @@
     let db = null;
     let currentStoragePath = localStorage.getItem('qevrino_storage_path') || '/Internal Storage/QevrinoDownloads';
     let customFolders = JSON.parse(localStorage.getItem('qevrino_custom_folders') || '["Download", "Music", "QevrinoMedia", "BackupData"]');
-    let backupExportMode = 'backup';
 
-    const request = indexedDB.open("QevrinoLocalDB", 20);
+    const request = indexedDB.open("QevrinoLocalDB", 23);
 
     request.onupgradeneeded = (e) => {
       db = e.target.result;
@@ -1122,6 +1136,27 @@
       } catch (err) {}
     }
 
+    function applyEQPreset(presetName) {
+      let bass = 0, mid = 0, treble = 0;
+      if (presetName === 'bass') { bass = 15; mid = -2; treble = 5; }
+      else if (presetName === 'pop') { bass = 5; mid = 8; treble = 6; }
+      else if (presetName === 'rock') { bass = 10; mid = 4; treble = 10; }
+      else if (presetName === 'classical') { bass = 6; mid = -4; treble = 8; }
+      else { bass = 0; mid = 0; treble = 0; }
+
+      eqValues = { bass, mid, treble };
+
+      document.getElementById('eq-bass-fill').style.width = ((bass + 20) / 40) * 100 + '%';
+      document.getElementById('eq-bass-thumb').style.left = ((bass + 20) / 40) * 100 + '%';
+      document.getElementById('eq-mid-fill').style.width = ((mid + 20) / 40) * 100 + '%';
+      document.getElementById('eq-mid-thumb').style.left = ((mid + 20) / 40) * 100 + '%';
+      document.getElementById('eq-treble-fill').style.width = ((treble + 20) / 40) * 100 + '%';
+      document.getElementById('eq-treble-thumb').style.left = ((treble + 20) / 40) * 100 + '%';
+
+      applyEQValues();
+      showToast(`🎛️ Preset: ${presetName.toUpperCase()}`);
+    }
+
     function setSleepTimer(minutes) {
       if (sleepTimerTimeout) clearTimeout(sleepTimerTimeout);
       if (sleepTimerInterval) clearInterval(sleepTimerInterval);
@@ -1207,7 +1242,7 @@
             <span>📁</span>
             <span style="font-size:0.8rem; font-weight:600;">/Internal Storage/${folder}</span>
           </div>
-          <span style="font-size:0.75rem; color:var(--accent-green); font-weight:700;">${isSelected ? 'Selected ✓' : 'Select'}</span>
+          <span style="font-size:0.75rem; color:var(--accent-red); font-weight:700;">${isSelected ? 'Selected ✓' : 'Select'}</span>
         `;
         item.onclick = () => {
           currentStoragePath = `/Internal Storage/${folder}`;
@@ -1237,8 +1272,7 @@
     }
 
     function openBackupSelectionModal(mode) {
-      backupExportMode = mode;
-      document.getElementById('backup-modal-title').innerText = mode === 'backup' ? '💾 Select Songs to Download' : '📥 Save As MP3/MP4 File';
+      document.getElementById('backup-modal-title').innerText = mode === 'backup' ? '💾 Full App Backup (ZIP)' : '📥 Save As (Selected)';
       renderBackupSongsList();
       document.getElementById('modal-backup-selector').style.display = 'flex';
     }
@@ -1263,7 +1297,7 @@
         item.style.cursor = 'pointer';
 
         item.innerHTML = `
-          <input type="checkbox" class="backup-track-checkbox" data-id="${track.id}" checked style="width:16px; height:16px; accent-color:var(--accent-green); cursor:pointer;">
+          <input type="checkbox" class="backup-track-checkbox" data-id="${track.id}" checked style="width:16px; height:16px; accent-color:var(--accent-red); cursor:pointer;">
           <div style="font-size:0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">${track.name}</div>
           <div style="font-size:0.68rem; color:var(--text-sub);">${track.type}</div>
         `;
@@ -1300,25 +1334,35 @@
       }
 
       const selectedTracks = mediaList.filter(t => selectedIds.includes(t.id));
-      showToast(`⏳ Saving ${selectedTracks.length} files...`);
+      showToast(`⏳ Creating full backup ZIP (${selectedTracks.length} tracks)...`);
 
-      for (let i = 0; i < selectedTracks.length; i++) {
-        let track = selectedTracks[i];
-        if (!track.blob) continue;
+      const zip = new JSZip();
+      
+      const backupMeta = {
+        playlists: playlists,
+        storagePath: currentStoragePath,
+        version: "2.3"
+      };
+      zip.file("qevrino_metadata.json", JSON.stringify(backupMeta, null, 2));
 
-        let mimeType = track.isVideo ? 'video/mp4' : 'audio/mpeg';
-        let cleanBlob = new Blob([track.blob], { type: mimeType });
-        
-        const url = URL.createObjectURL(cleanBlob);
+      const mediaFolder = zip.folder("media_files");
+      for (let track of selectedTracks) {
+        if (track.blob) {
+          let ext = track.isVideo ? '.mp4' : '.mp3';
+          let safeName = track.name.replace(/[^a-zA-Z0-9_\u0980-\u09FF\s-]/g, '_');
+          if (!safeName.endsWith('.mp3') && !safeName.endsWith('.mp4')) {
+            safeName += ext;
+          }
+          mediaFolder.file(safeName, track.blob);
+        }
+      }
+
+      try {
+        const content = await zip.generateAsync({ type: "blob" });
+        const url = URL.createObjectURL(content);
         const dl = document.createElement('a');
         dl.href = url;
-        
-        let ext = track.isVideo ? '.mp4' : '.mp3';
-        let safeName = track.name.replace(/[^a-zA-Z0-9_\u0980-\u09FF\s-]/g, '_');
-        if (!safeName.endsWith('.mp3') && !safeName.endsWith('.mp4')) {
-          safeName += ext;
-        }
-        dl.download = safeName;
+        dl.download = `Qevrino_Full_Backup_${new Date().toISOString().slice(0,10)}.zip`;
         dl.style.display = 'none';
 
         document.body.appendChild(dl);
@@ -1326,30 +1370,75 @@
         document.body.removeChild(dl);
         
         setTimeout(() => URL.revokeObjectURL(url), 1500);
-        await new Promise(res => setTimeout(res, 500));
+        closeModal('modal-backup-selector');
+        showToast(`✅ Full Backup ZIP downloaded successfully!`);
+      } catch (err) {
+        console.error(err);
+        showToast("⚠️ Failed to create ZIP backup.");
       }
-
-      closeModal('modal-backup-selector');
-      showToast(`✅ Successfully downloaded!`);
     }
 
-    async function importAppData(event) {
-      const file = event.target.files[0];
+    document.getElementById('import-zip-input').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = async function(e) {
-        try {
-          const imported = JSON.parse(e.target.result);
-          if (imported.playlists) { for (let pl of imported.playlists) await savePlaylistToDB(pl); }
-          showToast("📂 Restored Successfully!");
-          loadStoredData();
-        } catch (err) { showToast("⚠️ Invalid file"); }
-      };
-      reader.readAsText(file);
-    }
+
+      showToast("⏳ Restoring full backup...");
+      
+      try {
+        const zip = new JSZip();
+        const contents = await zip.loadAsync(file);
+        let trackCount = 0;
+
+        if (contents.files["qevrino_metadata.json"]) {
+          const metaStr = await contents.files["qevrino_metadata.json"].async("text");
+          const metaData = JSON.parse(metaStr);
+          if (metaData.playlists) {
+            for (let pl of metaData.playlists) {
+              await savePlaylistToDB(pl);
+            }
+          }
+        }
+
+        for (let filename of Object.keys(contents.files)) {
+          const zipEntry = contents.files[filename];
+          if (zipEntry.dir || filename.includes("qevrino_metadata.json")) continue;
+
+          if (filename.endsWith('.mp3') || filename.endsWith('.mp4')) {
+            const blob = await zipEntry.async("blob");
+            let cleanName = filename.replace(/^.*[\\\/]/, '').replace(/\.[^/.]+$/, "");
+            const isVideo = filename.endsWith('.mp4');
+
+            const id = 'track_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+            const mediaData = {
+              id: id,
+              name: cleanName,
+              blob: blob,
+              coverBlob: null,
+              type: isVideo ? 'Video (MP4)' : 'Audio (MP3)',
+              isVideo: isVideo,
+              createdAt: Date.now(),
+              isFavorite: false,
+              playCount: 0,
+              lyrics: ""
+            };
+
+            await saveMediaToDB(mediaData);
+            mediaList.push(mediaData);
+            trackCount++;
+          }
+        }
+
+        loadStoredData();
+        showToast(`✅ Successfully restored playlists & ${trackCount} tracks!`);
+      } catch (err) {
+        console.error(err);
+        showToast("⚠️ Invalid or corrupted backup ZIP!");
+      }
+      e.target.value = '';
+    });
 
     function setAccentTheme(hexColor, glowColor) {
-      document.documentElement.style.setProperty('--accent-green', hexColor);
+      document.documentElement.style.setProperty('--accent-red', hexColor);
       document.documentElement.style.setProperty('--accent-glow', glowColor);
       localStorage.setItem('qevrino_theme_hex', hexColor);
       localStorage.setItem('qevrino_theme_glow', glowColor);
@@ -1361,7 +1450,7 @@
       const hex = localStorage.getItem('qevrino_theme_hex');
       const glow = localStorage.getItem('qevrino_theme_glow');
       if (hex && glow) {
-        document.documentElement.style.setProperty('--accent-green', hex);
+        document.documentElement.style.setProperty('--accent-red', hex);
         document.documentElement.style.setProperty('--accent-glow', glow);
       }
     }
@@ -1456,19 +1545,16 @@
       }
     }
 
-    function startSeek(e, type) {
-      e.preventDefault();
-      const container = e.currentTarget;
-      
-      function updatePos(clientX) {
+    function setupSeekListener(containerId, updateCallback) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const updatePos = (clientX) => {
         const rect = container.getBoundingClientRect();
         let pos = (clientX - rect.left) / rect.width;
         pos = Math.max(0, Math.min(1, pos));
-        const activeEl = fsVideoPlayer.style.display === 'block' ? fsVideoPlayer : audioPlayer;
-        if (activeEl.duration) {
-          activeEl.currentTime = pos * activeEl.duration;
-        }
-      }
+        updateCallback(pos);
+      };
 
       const onMouseMove = (ev) => updatePos(ev.clientX);
       const onTouchMove = (ev) => updatePos(ev.touches[0].clientX);
@@ -1480,49 +1566,44 @@
         window.removeEventListener('touchend', onEnd);
       };
 
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onEnd);
-      window.addEventListener('touchmove', onTouchMove);
-      window.addEventListener('touchend', onEnd);
+      container.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        updatePos(e.clientX);
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onEnd);
+      });
 
-      if (e.clientX) updatePos(e.clientX);
-      else if (e.touches) updatePos(e.touches[0].clientX);
+      container.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        updatePos(e.touches[0].clientX);
+        window.addEventListener('touchmove', onTouchMove);
+        window.addEventListener('touchend', onEnd);
+      }, { passive: false });
     }
 
-    function startEQSeek(e, type) {
-      e.preventDefault();
-      const container = e.currentTarget;
+    setupSeekListener('dock-progress-container', (pos) => {
+      const activeEl = fsVideoPlayer.style.display === 'block' ? fsVideoPlayer : audioPlayer;
+      if (activeEl.duration) activeEl.currentTime = pos * activeEl.duration;
+    });
 
-      function updateEQPos(clientX) {
-        const rect = container.getBoundingClientRect();
-        let pos = (clientX - rect.left) / rect.width;
-        pos = Math.max(0, Math.min(1, pos));
+    setupSeekListener('fs-progress-container', (pos) => {
+      const activeEl = fsVideoPlayer.style.display === 'block' ? fsVideoPlayer : audioPlayer;
+      if (activeEl.duration) activeEl.currentTime = pos * activeEl.duration;
+    });
+
+    function setupEQSeekListener(type) {
+      setupSeekListener(`eq-${type}-container`, (pos) => {
         const val = (pos * 40) - 20;
         eqValues[type] = val;
-        
         document.getElementById(`eq-${type}-fill`).style.width = (pos * 100) + '%';
         document.getElementById(`eq-${type}-thumb`).style.left = (pos * 100) + '%';
         applyEQValues();
-      }
-
-      const onMouseMove = (ev) => updateEQPos(ev.clientX);
-      const onTouchMove = (ev) => updateEQPos(ev.touches[0].clientX);
-      
-      const onEnd = () => {
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseup', onEnd);
-        window.removeEventListener('touchmove', onTouchMove);
-        window.removeEventListener('touchend', onEnd);
-      };
-
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onEnd);
-      window.addEventListener('touchmove', onTouchMove);
-      window.addEventListener('touchend', onEnd);
-
-      if (e.clientX) updateEQPos(e.clientX);
-      else if (e.touches) updateEQPos(e.touches[0].clientX);
+      });
     }
+
+    setupEQSeekListener('bass');
+    setupEQSeekListener('mid');
+    setupEQSeekListener('treble');
 
     function applyEQValues() {
       initWebAudioAPI();
@@ -1810,4 +1891,4 @@
     }
   </script>
 </body>
-</html>
+  </html>
