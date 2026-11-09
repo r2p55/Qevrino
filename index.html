@@ -12,8 +12,8 @@
       --bg-dark: #090a0f;
       --card-bg: rgba(255, 255, 255, 0.05);
       --card-hover: rgba(255, 255, 255, 0.09);
-      --accent-red: #ff3333; /* রেড নিয়ন হাইলাইট কালার */
-      --accent-glow: rgba(255, 51, 51, 0.35); /* রেড নিয়ন গ্লো */
+      --accent-red: #ff3333;
+      --accent-glow: rgba(255, 51, 51, 0.35);
       --text-main: #ffffff;
       --text-sub: #a0a5aa;
       --border: rgba(255, 255, 255, 0.08);
@@ -36,7 +36,7 @@
       flex-direction: column;
       overflow: hidden;
       user-select: none;
-      overscroll-behavior-y: none; /* পুল-টু-রিফ্রেশ পুরোপুরি বন্ধ রাখতে */
+      overscroll-behavior-y: none;
       touch-action: pan-x pan-y;
     }
 
@@ -369,11 +369,13 @@
     .modal-btn.secondary { background: rgba(255,255,255,0.1); color: #fff; }
     .modal-btn.danger { background: #ff4d4d; color: #fff; }
 
+    /* Fix: multiple attribute properly exposed */
     #mp3-file-input, #mp4-file-input, #import-zip-input { display: none; }
   </style>
 </head>
 <body>
   <audio id="main-audio-player" crossorigin="anonymous"></audio>
+  <!-- Multiple select enabled explicitly -->
   <input type="file" id="mp3-file-input" multiple accept="audio/*,.mp3">
   <input type="file" id="mp4-file-input" multiple accept="video/mp4,.mp4">
   <input type="file" id="import-zip-input" accept=".zip">
@@ -756,7 +758,7 @@
     let currentStoragePath = localStorage.getItem('qevrino_storage_path') || '/Internal Storage/QevrinoDownloads';
     let customFolders = JSON.parse(localStorage.getItem('qevrino_custom_folders') || '["Download", "Music", "QevrinoMedia", "BackupData"]');
 
-    const request = indexedDB.open("QevrinoLocalDB", 23);
+    const request = indexedDB.open("QevrinoLocalDB", 24);
 
     request.onupgradeneeded = (e) => {
       db = e.target.result;
@@ -1341,7 +1343,7 @@
       const backupMeta = {
         playlists: playlists,
         storagePath: currentStoragePath,
-        version: "2.3"
+        version: "2.4"
       };
       zip.file("qevrino_metadata.json", JSON.stringify(backupMeta, null, 2));
 
@@ -1378,11 +1380,12 @@
       }
     }
 
+    // Fixed Restore Logic supporting both standard Qevrino backups and general ZIP archives
     document.getElementById('import-zip-input').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
-      showToast("⏳ Restoring full backup...");
+      showToast("⏳ Restoring backup...");
       
       try {
         const zip = new JSZip();
@@ -1403,7 +1406,7 @@
           const zipEntry = contents.files[filename];
           if (zipEntry.dir || filename.includes("qevrino_metadata.json")) continue;
 
-          if (filename.endsWith('.mp3') || filename.endsWith('.mp4')) {
+          if (filename.endsWith('.mp3') || filename.endsWith('.mp4') || filename.endsWith('.WAV') || filename.endsWith('.m4a')) {
             const blob = await zipEntry.async("blob");
             let cleanName = filename.replace(/^.*[\\\/]/, '').replace(/\.[^/.]+$/, "");
             const isVideo = filename.endsWith('.mp4');
@@ -1429,7 +1432,11 @@
         }
 
         loadStoredData();
-        showToast(`✅ Successfully restored playlists & ${trackCount} tracks!`);
+        if (trackCount > 0) {
+          showToast(`✅ Successfully restored ${trackCount} tracks!`);
+        } else {
+          showToast("⚠️ No supported audio/video found in ZIP!");
+        }
       } catch (err) {
         console.error(err);
         showToast("⚠️ Invalid or corrupted backup ZIP!");
@@ -1891,4 +1898,4 @@
     }
   </script>
 </body>
-  </html>
+          </html>
