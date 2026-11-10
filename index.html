@@ -173,7 +173,7 @@
     .menu-dropdown {
       display: none; position: absolute; right: 0; top: 100%;
       background: #181b24; border: 1px solid var(--border); border-radius: 10px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.9); z-index: 9999; min-width: 180px; overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.9); z-index: 9999; min-width: 200px; overflow: hidden;
     }
     .menu-dropdown.show { display: block; }
     .menu-item {
@@ -390,7 +390,8 @@
         <button class="action-btn" style="font-size:1.1rem; padding:4px;" onclick="toggleMenuDropdown('global-settings-menu', event)">⚙️</button>
         <div class="menu-dropdown" id="global-settings-menu" style="right:0;">
           <div class="menu-item" onclick="openThemePicker()">🎨 Accent Color</div>
-          <div class="menu-item" onclick="openPreferredStorageModal()">📁 Preferred Storage</div>
+          <div class="menu-item" onclick="openPreferredStorageModal('zip')">📁 Preferred Storage (ZIP)</div>
+          <div class="menu-item" onclick="openPreferredStorageModal('bulk')">📁 Preferred Storage (Bulk)</div>
           <div class="menu-item" onclick="openBackupSelectionModal()">📦 Bulk Backup (Folder)</div>
           <div class="menu-item" onclick="document.getElementById('import-folder-input').click()">📂 Restore Folder (Bulk)</div>
           <div class="menu-item" onclick="document.getElementById('import-zip-input').click()">📂 Restore Backup (ZIP)</div>
@@ -639,7 +640,7 @@
   <!-- Preferred Storage Modal -->
   <div class="modal-overlay" id="modal-preferred-storage">
     <div class="modal-card" style="max-height: 80vh;">
-      <h3 style="font-size: 1rem;">📁 Preferred Storage</h3>
+      <h3 id="storage-modal-title" style="font-size: 1rem;">📁 Preferred Storage (ZIP)</h3>
       <p style="font-size: 0.72rem; color: var(--text-sub);">Current Path: <span id="current-storage-path" style="color:var(--accent-red);">/Internal Storage/QevrinoDownloads</span></p>
       <div style="display: flex; gap: 6px; margin-top: 4px;">
         <input type="text" id="new-folder-name" placeholder="Create new folder..." style="flex:1;">
@@ -758,10 +759,12 @@
   <script>
     /* eslint-disable */
     let db = null;
-    let currentStoragePath = localStorage.getItem('qevrino_storage_path') || '/Internal Storage/QevrinoDownloads';
-    let customFolders = JSON.parse(localStorage.getItem('qevrino_custom_folders') || '["Download", "Music", "QevrinoMedia", "BackupData"]');
+    let zipStoragePath = localStorage.getItem('qevrino_zip_storage_path') || '/Internal Storage/QevrinoDownloads';
+    let bulkStoragePath = localStorage.getItem('qevrino_bulk_storage_path') || '/Internal Storage/QevrinoBulkBackups';
+    let activeStorageType = 'zip'; // 'zip' or 'bulk'
+    let customFolders = JSON.parse(localStorage.getItem('qevrino_custom_folders') || '["Download", "Music", "QevrinoMedia", "QevrinoBulkBackups"]');
 
-    const request = indexedDB.open("QevrinoLocalDB", 28);
+    const request = indexedDB.open("QevrinoLocalDB", 29);
 
     request.onupgradeneeded = (e) => {
       db = e.target.result;
@@ -1263,8 +1266,19 @@
       saveMediaToDB(track);
     }
 
-    function openPreferredStorageModal() {
-      document.getElementById('current-storage-path').innerText = currentStoragePath;
+    function openPreferredStorageModal(type) {
+      activeStorageType = type; // 'zip' or 'bulk'
+      const titleEl = document.getElementById('storage-modal-title');
+      const currentPathEl = document.getElementById('current-storage-path');
+      
+      if (type === 'zip') {
+        titleEl.innerText = "📁 Preferred Storage (ZIP)";
+        currentPathEl.innerText = zipStoragePath;
+      } else {
+        titleEl.innerText = "📁 Preferred Storage (Bulk)";
+        currentPathEl.innerText = bulkStoragePath;
+      }
+
       renderStorageFolders();
       document.getElementById('modal-preferred-storage').style.display = 'flex';
     }
@@ -1276,7 +1290,8 @@
         const item = document.createElement('div');
         item.className = 'track-card';
         item.style.padding = '8px 12px';
-        const isSelected = currentStoragePath.includes(folder);
+        const currentPath = activeStorageType === 'zip' ? zipStoragePath : bulkStoragePath;
+        const isSelected = currentPath.includes(folder);
         item.innerHTML = `
           <div style="display:flex; align-items:center; gap:8px;">
             <span>📁</span>
@@ -1285,11 +1300,17 @@
           <span style="font-size:0.75rem; color:var(--accent-red); font-weight:700;">${isSelected ? 'Selected ✓' : 'Select'}</span>
         `;
         item.onclick = () => {
-          currentStoragePath = `/Internal Storage/${folder}`;
-          localStorage.setItem('qevrino_storage_path', currentStoragePath);
-          document.getElementById('current-storage-path').innerText = currentStoragePath;
+          const newPath = `/Internal Storage/${folder}`;
+          if (activeStorageType === 'zip') {
+            zipStoragePath = newPath;
+            localStorage.setItem('qevrino_zip_storage_path', zipStoragePath);
+          } else {
+            bulkStoragePath = newPath;
+            localStorage.setItem('qevrino_bulk_storage_path', bulkStoragePath);
+          }
+          document.getElementById('current-storage-path').innerText = newPath;
           renderStorageFolders();
-          showToast(`📁 Storage set to ${folder}`);
+          showToast(`📁 ${activeStorageType === 'zip' ? 'ZIP' : 'Bulk'} Storage set to ${folder}`);
         };
         container.appendChild(item);
       });
@@ -1303,11 +1324,17 @@
         customFolders.push(folderName);
         localStorage.setItem('qevrino_custom_folders', JSON.stringify(customFolders));
       }
-      currentStoragePath = `/Internal Storage/${folderName}`;
-      localStorage.setItem('qevrino_storage_path', currentStoragePath);
+      const newPath = `/Internal Storage/${folderName}`;
+      if (activeStorageType === 'zip') {
+        zipStoragePath = newPath;
+        localStorage.setItem('qevrino_zip_storage_path', zipStoragePath);
+      } else {
+        bulkStoragePath = newPath;
+        localStorage.setItem('qevrino_bulk_storage_path', bulkStoragePath);
+      }
       input.value = '';
       renderStorageFolders();
-      document.getElementById('current-storage-path').innerText = currentStoragePath;
+      document.getElementById('current-storage-path').innerText = newPath;
       showToast(`✅ Folder created & selected!`);
     }
 
@@ -1324,7 +1351,7 @@
         const opt = document.createElement('option');
         opt.value = folder;
         opt.innerText = `/Internal Storage/${folder}`;
-        if (currentStoragePath.includes(folder)) opt.selected = true;
+        if (bulkStoragePath.includes(folder)) opt.selected = true;
         select.appendChild(opt);
       });
     }
@@ -1376,7 +1403,6 @@
       document.getElementById('backup-selected-count').innerText = `${selectedCount} of ${mediaList.length} selected`;
     }
 
-    // Direct Bulk Export utilizing Preferred Storage / Directory Picker
     async function executeBulkFolderBackup() {
       const checkedBoxes = document.querySelectorAll('.backup-track-checkbox:checked');
       const selectedIds = Array.from(checkedBoxes).map(chk => chk.getAttribute('data-id'));
@@ -1390,7 +1416,6 @@
       let folderNameInput = document.getElementById('backup-folder-name-input').value.trim() || "Qevrino_Bulk_Backup";
       const selectedTracks = mediaList.filter(t => selectedIds.includes(t.id));
       
-      // Attempt Directory Picker if supported by device browser
       if (window.showDirectoryPicker) {
         try {
           showToast(`📁 Select destination folder (${selectedFolder})...`);
@@ -1420,7 +1445,6 @@
         }
       }
 
-      // Smart Fallback: Download files cleanly so they land in phone's selected download folder
       showToast(`⏳ Exporting ${selectedTracks.length} files to ${selectedFolder}...`);
       for (let i = 0; i < selectedTracks.length; i++) {
         let track = selectedTracks[i];
@@ -1946,4 +1970,4 @@
     }
   </script>
 </body>
-                                  </html>
+            </html>
