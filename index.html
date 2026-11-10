@@ -761,10 +761,10 @@
     let db = null;
     let zipStoragePath = localStorage.getItem('qevrino_zip_storage_path') || '/Internal Storage/QevrinoDownloads';
     let bulkStoragePath = localStorage.getItem('qevrino_bulk_storage_path') || '/Internal Storage/QevrinoBulkBackups';
-    let activeStorageType = 'zip'; // 'zip' or 'bulk'
+    let activeStorageType = 'zip'; 
     let customFolders = JSON.parse(localStorage.getItem('qevrino_custom_folders') || '["Download", "Music", "QevrinoMedia", "QevrinoBulkBackups"]');
 
-    const request = indexedDB.open("QevrinoLocalDB", 29);
+    const request = indexedDB.open("QevrinoLocalDB", 30);
 
     request.onupgradeneeded = (e) => {
       db = e.target.result;
@@ -1267,7 +1267,7 @@
     }
 
     function openPreferredStorageModal(type) {
-      activeStorageType = type; // 'zip' or 'bulk'
+      activeStorageType = type; 
       const titleEl = document.getElementById('storage-modal-title');
       const currentPathEl = document.getElementById('current-storage-path');
       
@@ -1403,6 +1403,7 @@
       document.getElementById('backup-selected-count').innerText = `${selectedCount} of ${mediaList.length} selected`;
     }
 
+    // Direct Bulk Export without directory prompt error
     async function executeBulkFolderBackup() {
       const checkedBoxes = document.querySelectorAll('.backup-track-checkbox:checked');
       const selectedIds = Array.from(checkedBoxes).map(chk => chk.getAttribute('data-id'));
@@ -1413,39 +1414,10 @@
       }
 
       const selectedFolder = document.getElementById('backup-target-folder-select').value;
-      let folderNameInput = document.getElementById('backup-folder-name-input').value.trim() || "Qevrino_Bulk_Backup";
       const selectedTracks = mediaList.filter(t => selectedIds.includes(t.id));
       
-      if (window.showDirectoryPicker) {
-        try {
-          showToast(`📁 Select destination folder (${selectedFolder})...`);
-          const dirHandle = await window.showDirectoryPicker();
-          const subDirHandle = await dirHandle.getDirectoryHandle(folderNameInput, { create: true });
-          
-          showToast(`⏳ Exporting ${selectedTracks.length} tracks...`);
-          
-          for (let track of selectedTracks) {
-            if (track.blob) {
-              let ext = track.isVideo ? '.mp4' : '.mp3';
-              let safeName = track.name.replace(/[^a-zA-Z0-9_\u0980-\u09FF\s-]/g, '_');
-              if (!safeName.endsWith('.mp3') && !safeName.endsWith('.mp4')) safeName += ext;
-              
-              const fileHandle = await subDirHandle.getFileHandle(safeName, { create: true });
-              const writable = await fileHandle.createWritable();
-              await writable.write(track.blob);
-              await writable.close();
-            }
-          }
-          
-          closeModal('modal-backup-selector');
-          showToast(`✅ Exported to /${selectedFolder}/${folderNameInput}!`);
-          return;
-        } catch (err) {
-          if (err.name === 'AbortError') return;
-        }
-      }
-
       showToast(`⏳ Exporting ${selectedTracks.length} files to ${selectedFolder}...`);
+      
       for (let i = 0; i < selectedTracks.length; i++) {
         let track = selectedTracks[i];
         if (track.blob) {
@@ -1462,7 +1434,7 @@
           dl.click();
           document.body.removeChild(dl);
           setTimeout(() => URL.revokeObjectURL(url), 1000);
-          await new Promise(r => setTimeout(r, 200));
+          await new Promise(r => setTimeout(r, 250));
         }
       }
 
@@ -1952,7 +1924,7 @@
       });
     }
 
-    function confirmRemoveFromPlaylist(plId, trackId, trackName) {
+    function confirmRemoveFromPlaylist(plId, trackId, trackName, trackName) {
       document.getElementById('delete-modal-title').innerText = "⚠️ Remove";
       document.getElementById('delete-modal-text').innerText = `Remove "${trackName}"?`;
       deleteCallbackAction = async () => {
@@ -1970,4 +1942,4 @@
     }
   </script>
 </body>
-            </html>
+</html>
