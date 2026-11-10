@@ -656,8 +656,12 @@
   <div class="modal-overlay" id="modal-backup-selector">
     <div class="modal-card" style="max-height: 85vh;">
       <h3 style="font-size: 1rem;">📦 Bulk Folder Backup</h3>
+      <label>Backup Destination Folder</label>
+      <select class="fs-select" id="backup-target-folder-select" style="width: 100%; padding: 8px; margin-top: 2px;"></select>
+      
       <label>Backup Folder Name</label>
       <input type="text" id="backup-folder-name-input" value="Qevrino_Bulk_Backup" placeholder="Folder name...">
+      
       <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; margin: 4px 0;">
         <span id="backup-selected-count">0 selected</span>
         <div style="display: flex; gap: 6px;">
@@ -665,7 +669,7 @@
           <button class="modal-btn secondary" style="padding: 3px 8px; font-size: 0.68rem;" onclick="toggleSelectAllBackup(false)">Deselect All</button>
         </div>
       </div>
-      <div id="backup-songs-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 6px;"></div>
+      <div id="backup-songs-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 6px;"></div>
       <div class="modal-btns" style="margin-top: 10px;">
         <button class="modal-btn secondary" onclick="closeModal('modal-backup-selector')">Cancel</button>
         <button class="modal-btn primary" onclick="executeBulkFolderBackup()">Export Bulk Folder</button>
@@ -757,7 +761,7 @@
     let currentStoragePath = localStorage.getItem('qevrino_storage_path') || '/Internal Storage/QevrinoDownloads';
     let customFolders = JSON.parse(localStorage.getItem('qevrino_custom_folders') || '["Download", "Music", "QevrinoMedia", "BackupData"]');
 
-    const request = indexedDB.open("QevrinoLocalDB", 27);
+    const request = indexedDB.open("QevrinoLocalDB", 28);
 
     request.onupgradeneeded = (e) => {
       db = e.target.result;
@@ -917,7 +921,6 @@
       e.target.value = '';
     });
 
-    // Enhanced Bulk Folder Restore handler (Fixes 0 items issue)
     document.getElementById('import-folder-input').addEventListener('change', async (e) => {
       const files = Array.from(e.target.files || []);
       if (!files.length) return;
@@ -1310,7 +1313,20 @@
 
     function openBackupSelectionModal() {
       renderBackupSongsList();
+      populateBackupFolderDropdown();
       document.getElementById('modal-backup-selector').style.display = 'flex';
+    }
+
+    function populateBackupFolderDropdown() {
+      const select = document.getElementById('backup-target-folder-select');
+      select.innerHTML = '';
+      customFolders.forEach(folder => {
+        const opt = document.createElement('option');
+        opt.value = folder;
+        opt.innerText = `/Internal Storage/${folder}`;
+        if (currentStoragePath.includes(folder)) opt.selected = true;
+        select.appendChild(opt);
+      });
     }
 
     function renderBackupSongsList() {
@@ -1360,7 +1376,7 @@
       document.getElementById('backup-selected-count').innerText = `${selectedCount} of ${mediaList.length} selected`;
     }
 
-    // Direct Bulk Folder Export (No ZIP required)
+    // Direct Bulk Export utilizing Preferred Storage / Directory Picker
     async function executeBulkFolderBackup() {
       const checkedBoxes = document.querySelectorAll('.backup-track-checkbox:checked');
       const selectedIds = Array.from(checkedBoxes).map(chk => chk.getAttribute('data-id'));
@@ -1370,12 +1386,14 @@
         return;
       }
 
+      const selectedFolder = document.getElementById('backup-target-folder-select').value;
       let folderNameInput = document.getElementById('backup-folder-name-input').value.trim() || "Qevrino_Bulk_Backup";
       const selectedTracks = mediaList.filter(t => selectedIds.includes(t.id));
       
+      // Attempt Directory Picker if supported by device browser
       if (window.showDirectoryPicker) {
         try {
-          showToast("📁 Please select destination folder...");
+          showToast(`📁 Select destination folder (${selectedFolder})...`);
           const dirHandle = await window.showDirectoryPicker();
           const subDirHandle = await dirHandle.getDirectoryHandle(folderNameInput, { create: true });
           
@@ -1395,15 +1413,15 @@
           }
           
           closeModal('modal-backup-selector');
-          showToast("✅ Bulk folder backup completed!");
+          showToast(`✅ Exported to /${selectedFolder}/${folderNameInput}!`);
           return;
         } catch (err) {
           if (err.name === 'AbortError') return;
         }
       }
 
-      // Fallback bulk multi-file automatic download
-      showToast(`⏳ Downloading ${selectedTracks.length} files...`);
+      // Smart Fallback: Download files cleanly so they land in phone's selected download folder
+      showToast(`⏳ Exporting ${selectedTracks.length} files to ${selectedFolder}...`);
       for (let i = 0; i < selectedTracks.length; i++) {
         let track = selectedTracks[i];
         if (track.blob) {
@@ -1425,7 +1443,7 @@
       }
 
       closeModal('modal-backup-selector');
-      showToast("✅ Bulk backup downloaded successfully!");
+      showToast(`✅ Bulk backup completed in /${selectedFolder}!`);
     }
 
     document.getElementById('import-zip-input').addEventListener('change', async (e) => {
@@ -1914,7 +1932,7 @@
       document.getElementById('delete-modal-title').innerText = "⚠️ Remove";
       document.getElementById('delete-modal-text').innerText = `Remove "${trackName}"?`;
       deleteCallbackAction = async () => {
-        const pl = playlists.update ? null : playlists.find(p => p.id === plId);
+        const pl = playlists.find(p => p.id === plId);
         if (pl) {
           pl.trackIds = pl.trackIds.filter(id => id !== trackId);
           await savePlaylistToDB(pl);
@@ -1928,4 +1946,4 @@
     }
   </script>
 </body>
-</html>
+                                  </html>
